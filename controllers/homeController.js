@@ -38,6 +38,14 @@ class HomeController {
         });
     }
 
+    // GET /relatorios
+    static relatorios(req, res) {
+        res.render('relatorios', {
+            title: 'Relatórios - Morrinhos App',
+            currentPage: 'relatorios'
+        });
+    }
+
     // GET /configuracoes
     static configuracoes(req, res) {
         res.render('configuracoes', {

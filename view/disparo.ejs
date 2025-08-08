@@ -9,6 +9,34 @@
     <link href="/css/styles-simple.css" rel="stylesheet">
 </head> -->
 <%- include('partials/header') %>
+<style>
+    /* Estilo para colunas de ordenação */
+    th[onclick] {
+        transition: background-color 0.2s ease;
+    }
+    
+    th[onclick]:hover {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+    
+    /* Estilo para ícones de ordenação */
+    #iconeOrdenacao {
+        font-size: 0.8em;
+        transition: color 0.2s ease;
+    }
+    
+    /* Indicador visual de que a coluna é clicável */
+    th[onclick]::after {
+        content: "";
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        opacity: 0.3;
+    }
+</style>
 <body>
     <!-- Navigation -->
     <!-- <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
@@ -189,12 +217,12 @@
                             <label class="form-label">Buscar</label>
                             <input type="text" class="form-control form-control-sm" id="searchSolicitacoes" placeholder="Buscar paciente...">
                         </div>
-                        <div class="col-md-3">
+                        <!-- <div class="col-md-3">
                             <label class="form-label">Situação</label>
                             <select class="form-select form-select-sm" id="filterSituacao">
                                 <option value="">Todas</option>
                             </select>
-                        </div>
+                        </div> -->
                         <div class="col-md-3">
                             <label class="form-label">Status Disparo</label>
                             <select class="form-select form-select-sm" id="filterStatusDisparo">
@@ -306,12 +334,16 @@
                                     <th>Paciente</th>
                                     <th width="120">ID Paciente</th>
                                     <th>Procedimento</th>
-                                    <th>Data/Hora</th>
-                                    <th>Situação</th>
+                                    <th style="cursor: pointer; user-select: none;" onclick="ordenarPorDataHora()" title="Clique para ordenar por Data/Hora">
+                                        Data/Hora
+                                        <i id="iconeOrdenacao" class="bi bi-arrow-down-up ms-1 text-muted"></i>
+                                    </th>
+                                    <!-- <th>Situação</th> -->
                                     <th>Classificação Risco</th>
                                     <th>Profissional</th>
                                     <th>Status Disparo</th>
                                     <th>Telefone</th>
+                                    <th width="250">Observação</th>
                                     <th width="200">Agendamento</th>
                                     <th width="80">Ações</th>
                                 </tr>
@@ -890,6 +922,10 @@
         let allSolicitacoes = [];
         let filteredSolicitacoes = [];
         let selectedSolicitacoes = new Set();
+        
+        // Variáveis para controle da ordenação
+        let ordenacaoAtual = 'desc'; // 'asc' ou 'desc' - começa com mais recente primeiro
+        let colunaOrdenacao = 'data_hora';
 
         // Carregar solicitações de uma source
         async function carregarSolicitacoes(sourceId) {
@@ -917,6 +953,16 @@
                     
                     // Popular filtros
                     popularFiltros();
+                    
+                    // Aplicar ordenação inicial (mais recente primeiro)
+                    aplicarOrdenacao();
+                    
+                    // Atualizar ícone de ordenação para mostrar estado inicial
+                    const icone = document.getElementById('iconeOrdenacao');
+                    if (icone) {
+                        icone.className = 'bi bi-arrow-down ms-1 text-primary';
+                        icone.title = 'Ordenado: mais recente primeiro';
+                    }
                     
                     // Renderizar tabela
                     renderizarTabelaSolicitacoes();
@@ -980,7 +1026,7 @@
 
         // Popular filtros com valores únicos
         function popularFiltros() {
-            const situacoes = [...new Set(allSolicitacoes.map(s => s.situacao).filter(Boolean))];
+            // const situacoes = [...new Set(allSolicitacoes.map(s => s.situacao).filter(Boolean))];
             const procedimentos = [...new Set(allSolicitacoes.map(s => s.procedimento).filter(Boolean))];
             const profissionais = [...new Set(allSolicitacoes.map(s => s.profissional_solicitante).filter(Boolean))];
             const classificacoesRisco = [...new Set(allSolicitacoes.map(s => s.classificacao_risco).filter(Boolean))];
@@ -989,7 +1035,7 @@
             console.log('Classificações de risco disponíveis:', classificacoesRisco);
             console.log('Status de disparo disponíveis:', statusDisparo);
             
-            popularSelect('filterSituacao', situacoes);
+            //popularSelect('filterSituacao', situacoes);
             popularDropdownProcedimentos(procedimentos);
             popularSelect('filterProfissional', profissionais);
             popularSelect('filterClassificacaoRisco', classificacoesRisco);
@@ -1192,7 +1238,7 @@
                            value="${solicitacao.id}" ${isSelected ? 'checked' : ''}>
                 </td>
                 <td>
-                    <small class="text-muted">#${solicitacao.id}</small>
+                    <small class="text-muted">#${solicitacao.solicitacao}</small>
                 </td>
                 <td>${solicitacao.paciente || '-'}</td>
                 <td>
@@ -1202,9 +1248,9 @@
                     ${solicitacao.procedimento || '-'}
                 </td>
                 <td>${solicitacao.data_hora || '-'}</td>
-                <td>
-                    <span class="badge bg-info">${solicitacao.situacao || '-'}</span>
-                </td>
+                <!-- <td>
+                <span class="badge bg-info">${solicitacao.situacao || '-'}</span>
+                </td> -->
                 <td>
                     <span class="badge ${getClassificacaoRiscoClass(solicitacao.classificacao_risco)}">
                         ${solicitacao.classificacao_risco || '-'}
@@ -1217,6 +1263,21 @@
                     </span>
                 </td>
                 <td>${solicitacao.celular_telefone || '-'}</td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <textarea class="form-control form-control-sm observacao-input" 
+                                  data-solicitacao-id="${solicitacao.id}" 
+                                  rows="2" 
+                                  style="min-width: 200px; resize: vertical;"
+                                  placeholder="Adicionar observação..."
+                                  title="Digite uma observação">${solicitacao.observacao || ''}</textarea>
+                        <button class="btn btn-outline-primary btn-sm observacao-btn" 
+                                onclick="salvarObservacao(${solicitacao.id})" 
+                                title="Salvar observação">
+                            <i class="bi bi-save"></i>
+                        </button>
+                    </div>
+                </td>
                 <td>
                     <input type="datetime-local" 
                            class="form-control form-control-sm agendamento-input ${temAgendamento ? 'border-success' : ''}" 
@@ -1311,7 +1372,7 @@
             // Remover event listeners anteriores para evitar duplicação
             const elements = [
                 'searchSolicitacoes',
-                'filterSituacao',
+                //'filterSituacao',
                 'filterProfissional',
                 'filterClassificacaoRisco',
                 'filterStatusDisparo',
@@ -1332,7 +1393,7 @@
             document.getElementById('searchSolicitacoes').addEventListener('input', debounce(filtrarSolicitacoes, 300));
             
             // Filtros
-            document.getElementById('filterSituacao').addEventListener('change', filtrarSolicitacoes);
+            //document.getElementById('filterSituacao').addEventListener('change', filtrarSolicitacoes);
             // filterProcedimento é gerenciado pela função popularDropdownProcedimentos()
             document.getElementById('filterProfissional').addEventListener('change', filtrarSolicitacoes);
             document.getElementById('filterClassificacaoRisco').addEventListener('change', filtrarSolicitacoes);
@@ -1409,7 +1470,7 @@
         // Filtrar solicitações
         function filtrarSolicitacoes() {
             const searchTerm = document.getElementById('searchSolicitacoes').value.toLowerCase();
-            const situacao = document.getElementById('filterSituacao').value;
+            //const situacao = document.getElementById('filterSituacao').value;
             const procedimento = document.getElementById('filterProcedimento').value;
             const profissional = document.getElementById('filterProfissional').value;
             const classificacaoRisco = document.getElementById('filterClassificacaoRisco').value;
@@ -1419,7 +1480,7 @@
             
             console.log('Aplicando filtros:', {
                 searchTerm,
-                situacao,
+                //situacao,
                 procedimento,
                 profissional,
                 classificacaoRisco,
@@ -1430,7 +1491,7 @@
             
             filteredSolicitacoes = allSolicitacoes.filter(sol => {
                 const matchesSearch = (sol.paciente || '').toLowerCase().includes(searchTerm);
-                const matchesSituacao = !situacao || sol.situacao === situacao;
+                //const matchesSituacao = !situacao || sol.situacao === situacao;
                 
                 // Filtro de procedimento - suportar busca por palavra-chave
                 let matchesProcedimento = true;
@@ -1485,14 +1546,14 @@
                     }
                 }
                 
-                const result = matchesSearch && matchesSituacao && matchesProcedimento && matchesProfissional && matchesClassificacaoRisco && matchesStatusDisparo && matchesData;
+                const result = matchesSearch && matchesProcedimento && matchesProfissional && matchesClassificacaoRisco && matchesStatusDisparo && matchesData;
                 
                 // Debug para primeira solicitação
                 if (sol === allSolicitacoes[0]) {
                     console.log('Debug primeira solicitação:', {
                         paciente: sol.paciente,
                         matchesSearch,
-                        matchesSituacao,
+                        //matchesSituacao,
                         matchesProcedimento,
                         matchesProfissional,
                         matchesClassificacaoRisco,
@@ -1507,8 +1568,59 @@
             
             console.log(`Filtros aplicados: ${allSolicitacoes.length} -> ${filteredSolicitacoes.length} solicitações`);
             
+            // Aplicar ordenação após filtrar
+            aplicarOrdenacao();
+            
             renderizarTabelaSolicitacoes();
             atualizarContadores();
+        }
+
+        // Função para ordenar por Data/Hora
+        function ordenarPorDataHora() {
+            // Alternar entre ascendente e descendente
+            ordenacaoAtual = ordenacaoAtual === 'asc' ? 'desc' : 'asc';
+            
+            // Atualizar ícone
+            const icone = document.getElementById('iconeOrdenacao');
+            if (icone) {
+                if (ordenacaoAtual === 'asc') {
+                    icone.className = 'bi bi-arrow-up ms-1 text-primary';
+                    icone.title = 'Ordenado: mais antigo primeiro';
+                } else {
+                    icone.className = 'bi bi-arrow-down ms-1 text-primary';
+                    icone.title = 'Ordenado: mais recente primeiro';
+                }
+            }
+            
+            // Aplicar ordenação
+            aplicarOrdenacao();
+            
+            // Re-renderizar tabela
+            renderizarTabelaSolicitacoes();
+            
+            console.log(`Ordenação aplicada: ${ordenacaoAtual} por ${colunaOrdenacao}`);
+        }
+        
+        // Função para aplicar ordenação nas solicitações filtradas
+        function aplicarOrdenacao() {
+            if (colunaOrdenacao === 'data_hora') {
+                filteredSolicitacoes.sort((a, b) => {
+                    const dataA = extrairDataSolicitacao(a.data_hora);
+                    const dataB = extrairDataSolicitacao(b.data_hora);
+                    
+                    // Tratar casos onde não conseguimos extrair a data
+                    if (!dataA && !dataB) return 0;
+                    if (!dataA) return 1; // Colocar itens sem data no final
+                    if (!dataB) return -1;
+                    
+                    // Comparar datas
+                    if (ordenacaoAtual === 'asc') {
+                        return dataA.getTime() - dataB.getTime(); // Mais antigo primeiro
+                    } else {
+                        return dataB.getTime() - dataA.getTime(); // Mais recente primeiro
+                    }
+                });
+            }
         }
 
         // Funções de seleção
@@ -1641,7 +1753,7 @@
                 const configuracao = {
                     filtros: {
                         busca: document.getElementById('searchSolicitacoes').value,
-                        situacao: document.getElementById('filterSituacao').value,
+                        //situacao: document.getElementById('filterSituacao').value,
                         procedimento: document.getElementById('filterProcedimento').value,
                         profissional: document.getElementById('filterProfissional').value,
                         classificacaoRisco: document.getElementById('filterClassificacaoRisco').value,
@@ -1814,6 +1926,78 @@
                 
                 setTimeout(() => {
                     btn.innerHTML = '<i class="bi bi-check"></i>';
+                }, 3000);
+            }
+        }
+
+        // Salvar observação individual
+        async function salvarObservacao(solicitacaoId) {
+            const textarea = document.querySelector(`textarea[data-solicitacao-id="${solicitacaoId}"]`);
+            const observacao = textarea.value.trim();
+            
+            try {
+                // Desabilitar botão e textarea durante o salvamento
+                const btn = event.target.closest('button');
+                const originalBtnContent = btn.innerHTML;
+                
+                btn.disabled = true;
+                textarea.disabled = true;
+                btn.innerHTML = '<div class="spinner-border spinner-border-sm"></div>';
+                
+                const response = await fetch(`/api/solicitacoes/${solicitacaoId}/observacao`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        observacao: observacao
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Atualizar dados locais
+                    const solicitacao = allSolicitacoes.find(s => s.id === solicitacaoId);
+                    if (solicitacao) {
+                        solicitacao.observacao = observacao;
+                    }
+                    
+                    // Feedback visual de sucesso
+                    btn.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
+                    textarea.classList.add('border-success');
+                    
+                    // Mostrar toast de sucesso
+                    mostrarToast('Observação salva com sucesso!', 'success');
+                    
+                    // Restaurar botão após 2 segundos
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        textarea.disabled = false;
+                        btn.innerHTML = originalBtnContent;
+                        textarea.classList.remove('border-success');
+                    }, 2000);
+                    
+                } else {
+                    throw new Error(result.message || 'Erro ao salvar observação');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao salvar observação:', error);
+                mostrarToast('Erro ao salvar observação: ' + error.message, 'danger');
+                
+                // Restaurar controles em caso de erro
+                const btn = event.target.closest('button');
+                const textarea = document.querySelector(`textarea[data-solicitacao-id="${solicitacaoId}"]`);
+                
+                btn.disabled = false;
+                textarea.disabled = false;
+                btn.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger"></i>';
+                textarea.classList.add('border-danger');
+                
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="bi bi-save"></i>';
+                    textarea.classList.remove('border-danger');
                 }, 3000);
             }
         }

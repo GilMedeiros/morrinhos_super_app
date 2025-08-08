@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const multer = require('multer');
 require('dotenv').config();
 
 // Import controllers
@@ -12,6 +13,21 @@ const redis = require('./config/redis');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configurar multer para upload de arquivos
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 50 * 1024 * 1024 // 50MB
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/pdf') {
+            cb(null, true);
+        } else {
+            cb(new Error('Apenas arquivos PDF são permitidos'), false);
+        }
+    }
+});
 
 // Middleware
 app.use(express.json());
@@ -29,6 +45,7 @@ app.get('/about', HomeController.about);
 app.get('/upload', HomeController.upload);
 app.get('/disparo', HomeController.disparo);
 app.get('/disparos', HomeController.disparos);
+app.get('/relatorios', HomeController.relatorios);
 app.get('/configuracoes', HomeController.configuracoes);
 
 // API routes
@@ -67,7 +84,14 @@ app.post('/api/typebot/config', ApiController.saveTypebotConfig);
 app.delete('/api/typebot/config', ApiController.resetTypebotConfig);
 
 // Rotas para solicitações
+app.get('/api/solicitacoes', ApiController.getAllSolicitacoes);
+app.get('/api/solicitacoes/filters', ApiController.getSolicitacoesFilters);
 app.put('/api/solicitacoes/:id/schedule', ApiController.updateSolicitacaoSchedule);
+app.put('/api/solicitacoes/:id/observacao', ApiController.updateObservacao);
+
+// Rotas proxy para o serviço PDF
+app.get('/api/pdf-extractor', ApiController.getPdfExtractorStatus);
+app.post('/api/pdf-extractor/upload', upload.single('file'), ApiController.uploadPdf);
 
 // 404 handler
 app.use((req, res) => {

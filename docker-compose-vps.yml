@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  # Aplicação Node.js
+  app:
+    image: gilmedeiros/mr_app_cnta:alpha.1.2
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:21F5F7196AADADADA444DADRFSVVXB35A858629D65D752C8@193.203.174.146:5432/morrinhos?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - PDF_EXTRACTOR_URL=http://pdf-extractor:5000
+    depends_on:
+      - redis
+      - pdf-extractor
+    networks:
+      - apolloCompany_network
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.app.rule=Host(`morrinhos.apollocompany.com.br`)"
+        - "traefik.http.routers.app.entrypoints=websecure"
+        - "traefik.http.routers.app.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.app.priority=1"
+        - "traefik.http.routers.app.service=app"
+        - "traefik.http.services.app.loadbalancer.server.port=3000"
+        - "traefik.http.services.app.loadbalancer.passHostHeader=true"
+
+  # Cache Redis
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - apolloCompany_network
+    command: redis-server --appendonly yes
+
+  # Redis Commander (opcional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - apolloCompany_network
+
+  # Serviço Python para extração de PDF
+  pdf-extractor:
+    image: gilmedeiros/mr_pdf_extractor:alpha.1.2
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://postgres:21F5F7196AADADADA444DADRFSVVXB35A858629D65D752C8@193.203.174.146:5432/morrinhos?sslmode=disable
+    depends_on:
+      - redis
+    networks:
+      - apolloCompany_network
+
+volumes:
+  redis_data:
+
+networks:
+  apolloCompany_network:
+    external: true

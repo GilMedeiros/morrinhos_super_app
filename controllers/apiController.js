@@ -5,7 +5,7 @@ const redis = require('../config/redis');
 class ApiController {
     // GET /api
     static getStatus(req, res) {
-        res.json({ 
+        res.json({
             status: 'success',
             message: 'API is working!',
             timestamp: new Date().toISOString(),
@@ -13,14 +13,14 @@ class ApiController {
             environment: process.env.NODE_ENV || 'development'
         });
     }
-    
+
     // GET /api/users
     static async getUsers(req, res) {
         try {
             // Tentar buscar do cache primeiro
             const cacheKey = 'users:all';
             const cachedUsers = await redis.get(cacheKey);
-            
+
             if (cachedUsers) {
                 return res.json({
                     status: 'success',
@@ -32,10 +32,10 @@ class ApiController {
             // Buscar do banco de dados
             const users = await User.findAll();
             const usersJson = users.map(user => user.toJSON());
-            
+
             // Armazenar no cache por 5 minutos
             await redis.set(cacheKey, usersJson, 300);
-            
+
             res.json({
                 status: 'success',
                 data: usersJson,
@@ -55,11 +55,11 @@ class ApiController {
     static async getUserById(req, res) {
         try {
             const { id } = req.params;
-            
+
             // Tentar buscar do cache primeiro
             const cacheKey = `user:${id}`;
             const cachedUser = await redis.get(cacheKey);
-            
+
             if (cachedUser) {
                 return res.json({
                     status: 'success',
@@ -69,7 +69,7 @@ class ApiController {
             }
 
             const user = await User.findById(id);
-            
+
             if (!user) {
                 return res.status(404).json({
                     status: 'error',
@@ -78,10 +78,10 @@ class ApiController {
             }
 
             const userJson = user.toJSON();
-            
+
             // Armazenar no cache por 10 minutos
             await redis.set(cacheKey, userJson, 600);
-            
+
             res.json({
                 status: 'success',
                 data: userJson,
@@ -96,12 +96,12 @@ class ApiController {
             });
         }
     }
-    
+
     // POST /api/users
     static async createUser(req, res) {
         try {
             const { name, email } = req.body;
-            
+
             if (!name || !email) {
                 return res.status(400).json({
                     status: 'error',
@@ -110,10 +110,10 @@ class ApiController {
             }
 
             const newUser = await User.create({ name, email });
-            
+
             // Invalidar cache de todos os usuários
             await redis.del('users:all');
-            
+
             res.status(201).json({
                 status: 'success',
                 message: 'Usuário criado com sucesso',
@@ -121,21 +121,21 @@ class ApiController {
             });
         } catch (error) {
             console.error('Erro ao criar usuário:', error);
-            
+
             if (error.message.includes('Email já está em uso')) {
                 return res.status(409).json({
                     status: 'error',
                     message: error.message
                 });
             }
-            
+
             if (error.message.includes('Dados inválidos')) {
                 return res.status(400).json({
                     status: 'error',
                     message: error.message
                 });
             }
-            
+
             res.status(500).json({
                 status: 'error',
                 message: 'Erro interno do servidor',
@@ -149,7 +149,7 @@ class ApiController {
         try {
             const { id } = req.params;
             const { name, email } = req.body;
-            
+
             if (!name || !email) {
                 return res.status(400).json({
                     status: 'error',
@@ -158,11 +158,11 @@ class ApiController {
             }
 
             const updatedUser = await User.update(id, { name, email });
-            
+
             // Invalidar caches relacionados
             await redis.del('users:all');
             await redis.del(`user:${id}`);
-            
+
             res.json({
                 status: 'success',
                 message: 'Usuário atualizado com sucesso',
@@ -170,21 +170,21 @@ class ApiController {
             });
         } catch (error) {
             console.error('Erro ao atualizar usuário:', error);
-            
+
             if (error.message.includes('não encontrado')) {
                 return res.status(404).json({
                     status: 'error',
                     message: error.message
                 });
             }
-            
+
             if (error.message.includes('Dados inválidos')) {
                 return res.status(400).json({
                     status: 'error',
                     message: error.message
                 });
             }
-            
+
             res.status(500).json({
                 status: 'error',
                 message: 'Erro interno do servidor',
@@ -197,13 +197,13 @@ class ApiController {
     static async deleteUser(req, res) {
         try {
             const { id } = req.params;
-            
+
             const deletedUser = await User.delete(id);
-            
+
             // Invalidar caches relacionados
             await redis.del('users:all');
             await redis.del(`user:${id}`);
-            
+
             res.json({
                 status: 'success',
                 message: 'Usuário deletado com sucesso',
@@ -211,14 +211,14 @@ class ApiController {
             });
         } catch (error) {
             console.error('Erro ao deletar usuário:', error);
-            
+
             if (error.message.includes('não encontrado')) {
                 return res.status(404).json({
                     status: 'error',
                     message: error.message
                 });
             }
-            
+
             res.status(500).json({
                 status: 'error',
                 message: 'Erro interno do servidor',
@@ -230,7 +230,7 @@ class ApiController {
     // GET /api/health - Health check dos serviços
     static async healthCheck(req, res) {
         const db = require('../config/database');
-        
+
         const health = {
             status: 'ok',
             timestamp: new Date().toISOString(),
@@ -264,7 +264,7 @@ class ApiController {
         try {
             const db = require('../config/database');
             const client = await db.pool.connect();
-            
+
             try {
                 // Buscar sources com contagem de solicitações processadas e pendentes
                 const result = await client.query(`
@@ -277,7 +277,7 @@ class ApiController {
                         s.created_at,
                         s.updated_at,
                         COUNT(sol.id) as solicitacoes_extraidas,
-                        COUNT(CASE WHEN sol.status IN ('enviado', 'respondido', 'agendado', 'rejeitado', 'sem_resposta') THEN 1 END) as solicitacoes_processadas,
+                        COUNT(CASE WHEN sol.status IN ('enviado', 'respondido', 'agendado', 'rejeitado', 'sem_resposta','reagendar') THEN 1 END) as solicitacoes_processadas,
                         COUNT(CASE WHEN sol.status = 'pendente' THEN 1 END) as solicitacoes_pendentes_disparo,
                         COUNT(CASE WHEN sol.status = 'em_fila' THEN 1 END) as solicitacoes_em_fila,
                         (s.quantidade_itens - COUNT(sol.id)) as solicitacoes_nao_extraidas,
@@ -287,8 +287,8 @@ class ApiController {
                             WHEN s.status = 'completed' THEN 'Concluído'
                             WHEN COUNT(sol.id) = 0 THEN 'Sem Dados Extraídos'
                             WHEN COUNT(sol.id) < s.quantidade_itens THEN 'Extração Incompleta'
-                            WHEN COUNT(CASE WHEN sol.status IN ('enviado', 'respondido', 'agendado', 'rejeitado', 'sem_resposta') THEN 1 END) = COUNT(sol.id) THEN 'Disparos Concluídos'
-                            WHEN COUNT(CASE WHEN sol.status IN ('enviado', 'respondido', 'agendado', 'rejeitado', 'sem_resposta') THEN 1 END) > 0 THEN 'Disparos em Andamento'
+                            WHEN COUNT(CASE WHEN sol.status IN ('enviado', 'respondido', 'agendado', 'rejeitado', 'sem_resposta','reagendar') THEN 1 END) = COUNT(sol.id) THEN 'Disparos Concluídos'
+                            WHEN COUNT(CASE WHEN sol.status IN ('enviado', 'respondido', 'agendado', 'rejeitado', 'sem_resposta','reagendar') THEN 1 END) > 0 THEN 'Disparos em Andamento'
                             WHEN COUNT(CASE WHEN sol.status = 'em_fila' THEN 1 END) > 0 THEN 'Disparos Preparados'
                             ELSE 'Pronto para Disparo'
                         END as status_processamento
@@ -310,10 +310,10 @@ class ApiController {
                     solicitacoes_em_fila: parseInt(row.solicitacoes_em_fila),
                     solicitacoes_nao_extraidas: parseInt(row.solicitacoes_nao_extraidas),
                     status_processamento: row.status_processamento,
-                    porcentagem_extracao: row.quantidade_itens > 0 
+                    porcentagem_extracao: row.quantidade_itens > 0
                         ? Math.round((parseInt(row.solicitacoes_extraidas) / row.quantidade_itens) * 100)
                         : 0,
-                    porcentagem_disparo: parseInt(row.solicitacoes_extraidas) > 0 
+                    porcentagem_disparo: parseInt(row.solicitacoes_extraidas) > 0
                         ? Math.round((parseInt(row.solicitacoes_processadas) / parseInt(row.solicitacoes_extraidas)) * 100)
                         : 0,
                     created_at: row.created_at,
@@ -343,12 +343,12 @@ class ApiController {
     static async createDisparo(req, res) {
         const db = require('../config/database');
         const client = await db.pool.connect();
-        
+
         try {
             await client.query('BEGIN');
-            
+
             const { nome, descricao, source_id, solicitacoes_ids, configuracao } = req.body;
-            
+
             // Validações básicas
             if (!nome || !source_id || !solicitacoes_ids || !Array.isArray(solicitacoes_ids)) {
                 return res.status(400).json({
@@ -389,7 +389,7 @@ class ApiController {
             const disparo = disparoResult.rows[0];
 
             // Inserir as relações com as solicitações
-            const insertPromises = solicitacoes_ids.map(solicitacao_id => 
+            const insertPromises = solicitacoes_ids.map(solicitacao_id =>
                 client.query(`
                     INSERT INTO disparo_solicitacoes (disparo_id, solicitacao_id)
                     VALUES ($1, $2)
@@ -397,7 +397,7 @@ class ApiController {
             );
 
             await Promise.all(insertPromises);
-            
+
             // Atualizar status das solicitações selecionadas para "em_fila"
             console.log(`🔄 Atualizando status de ${solicitacoes_ids.length} solicitações para 'em_fila'`);
             await client.query(`
@@ -405,9 +405,9 @@ class ApiController {
                 SET status = 'em_fila', updated_at = CURRENT_TIMESTAMP
                 WHERE id = ANY($1)
             `, [solicitacoes_ids]);
-            
+
             console.log(`✅ Status das solicitações atualizado para 'em_fila' no disparo: ${disparo.id}`);
-            
+
             await client.query('COMMIT');
 
             res.status(201).json({
@@ -433,10 +433,10 @@ class ApiController {
     static async getDisparos(req, res) {
         const db = require('../config/database');
         const client = await db.pool.connect();
-        
+
         try {
             const { source_id } = req.query;
-            
+
             let query = `
                 SELECT 
                     d.*,
@@ -448,14 +448,14 @@ class ApiController {
                 INNER JOIN sources s ON d.source_id = s.id
                 LEFT JOIN disparo_solicitacoes ds ON d.id = ds.disparo_id
             `;
-            
+
             const params = [];
-            
+
             if (source_id) {
                 query += ' WHERE d.source_id = $1';
                 params.push(source_id);
             }
-            
+
             query += `
                 GROUP BY d.id, s.nome
                 ORDER BY d.data_criacao DESC
@@ -485,7 +485,7 @@ class ApiController {
     static async getDisparoById(req, res) {
         const db = require('../config/database');
         const client = await db.pool.connect();
-        
+
         try {
             const { id } = req.params;
 
@@ -519,7 +519,9 @@ class ApiController {
                     sol.schedule,
                     sol.classificacao_risco,
                     sol.identificacao_paciente,
-                    sol.profissional_solicitante
+                    sol.profissional_solicitante,
+                    sol.observacao,
+                    sol.status  -- Incluir o status da tabela solicitacoes
                 FROM disparo_solicitacoes ds
                 INNER JOIN solicitacoes sol ON ds.solicitacao_id = sol.id
                 WHERE ds.disparo_id = $1
@@ -549,7 +551,7 @@ class ApiController {
     static async updateDisparo(req, res) {
         const db = require('../config/database');
         const client = await db.pool.connect();
-        
+
         try {
             const { id } = req.params;
             const { nome, descricao, source_id, solicitacoes_ids, configuracao } = req.body;
@@ -564,7 +566,7 @@ class ApiController {
 
             // Verificar se o disparo existe e pode ser editado
             const checkResult = await client.query('SELECT status FROM disparos WHERE id = $1', [id]);
-            
+
             if (checkResult.rows.length === 0) {
                 return res.status(404).json({
                     status: 'error',
@@ -589,10 +591,10 @@ class ApiController {
             `;
 
             const disparoResult = await client.query(updateQuery, [
-                id, 
-                nome, 
-                descricao, 
-                source_id, 
+                id,
+                nome,
+                descricao,
+                source_id,
                 JSON.stringify(configuracao)
             ]);
 
@@ -611,13 +613,13 @@ class ApiController {
             // Adicionar novas solicitações ao disparo
             for (let i = 0; i < solicitacoes_ids.length; i++) {
                 const solicitacaoId = solicitacoes_ids[i];
-                
+
                 // Verificar se a solicitação existe
                 const solicitacaoCheck = await client.query(
-                    'SELECT id FROM solicitacoes WHERE id = $1', 
+                    'SELECT id FROM solicitacoes WHERE id = $1',
                     [solicitacaoId]
                 );
-                
+
                 if (solicitacaoCheck.rows.length === 0) {
                     console.warn(`Solicitação ${solicitacaoId} não encontrada, pulando...`);
                     continue;
@@ -659,7 +661,7 @@ class ApiController {
     static async updateDisparoStatus(req, res) {
         const db = require('../config/database');
         const client = await db.pool.connect();
-        
+
         try {
             const { id } = req.params;
             const { status, resultado } = req.body;
@@ -732,13 +734,13 @@ class ApiController {
     static async deleteDisparo(req, res) {
         const db = require('../config/database');
         const client = await db.pool.connect();
-        
+
         try {
             const { id } = req.params;
 
             // Verificar se o disparo existe
             const checkResult = await client.query('SELECT status FROM disparos WHERE id = $1', [id]);
-            
+
             if (checkResult.rows.length === 0) {
                 return res.status(404).json({
                     status: 'error',
@@ -778,7 +780,7 @@ class ApiController {
     static async updateSolicitacaoSchedule(req, res) {
         const db = require('../config/database');
         const client = await db.pool.connect();
-        
+
         try {
             const { id } = req.params;
             const { schedule } = req.body;
@@ -846,13 +848,13 @@ class ApiController {
     // GET /api/sources/:id/solicitacoes - Buscar solicitações de uma source específica
     static async getSolicitacoesBySource(req, res) {
         const db = require('../config/database');
-        
+
         try {
             console.log('🔍 getSolicitacoesBySource chamado para source:', req.params.id);
-            
+
             const client = await db.pool.connect();
             const sourceId = parseInt(req.params.id);
-            
+
             if (!sourceId || isNaN(sourceId)) {
                 client.release();
                 return res.status(400).json({
@@ -867,6 +869,7 @@ class ApiController {
             const query = `
                 SELECT 
                     s.id,
+                    s.solicitacao,
                     s.paciente,
                     s.procedimento,
                     s.data_hora,
@@ -874,6 +877,8 @@ class ApiController {
                     s.profissional_solicitante,
                     s.classificacao_risco,
                     s.celular_telefone,
+                    s.identificacao_paciente,
+                    s.observacao,
                     s.status,
                     s.schedule,
                     s.source_id,
@@ -919,7 +924,7 @@ class ApiController {
         const { getDisparoQueue } = require('../services/disparoQueue');
         const client = await db.pool.connect();
         const { id } = req.params; // Mover para fora do try para acessibilidade no catch
-        
+
         try {
             // Verificar se o disparo existe e não está em execução
             const disparoResult = await client.query(`
@@ -998,11 +1003,11 @@ class ApiController {
             // Inicializar a fila se não estiver rodando
             const queue = getDisparoQueue();
             const queueStatus = queue.getStatus();
-            
+
             if (!queueStatus.isProcessing) {
                 console.log('🚀 Iniciando sistema de fila de disparos...');
                 const started = await queue.startQueue();
-                
+
                 if (!started) {
                     // Reverter status do disparo se a fila não pôde ser iniciada
                     await client.query(`
@@ -1035,7 +1040,7 @@ class ApiController {
 
         } catch (error) {
             console.error('Erro ao executar disparo:', error);
-            
+
             // Em caso de erro, atualizar disparo para status de erro (se id estiver disponível)
             if (id) {
                 try {
@@ -1067,7 +1072,7 @@ class ApiController {
         const avgInterval = 25;
         const estimatedSeconds = totalMessages * avgInterval;
         const estimatedMinutes = Math.ceil(estimatedSeconds / 60);
-        
+
         return {
             total_messages: totalMessages,
             estimated_seconds: estimatedSeconds,
@@ -1081,10 +1086,10 @@ class ApiController {
         try {
             const { getDisparoQueue } = require('../services/disparoQueue');
             const queue = getDisparoQueue();
-            
+
             const status = queue.getStatus();
             const stats = await queue.getQueueStats();
-            
+
             res.json({
                 status: 'success',
                 data: {
@@ -1110,9 +1115,9 @@ class ApiController {
         try {
             const { getDisparoQueue } = require('../services/disparoQueue');
             const queue = getDisparoQueue();
-            
+
             const started = await queue.startQueue();
-            
+
             if (started) {
                 res.json({
                     status: 'success',
@@ -1141,9 +1146,9 @@ class ApiController {
         try {
             const { getDisparoQueue } = require('../services/disparoQueue');
             const queue = getDisparoQueue();
-            
+
             queue.stopQueue();
-            
+
             res.json({
                 status: 'success',
                 message: 'Fila de disparos parada com sucesso',
@@ -1165,9 +1170,9 @@ class ApiController {
         try {
             const { getDisparoQueue } = require('../services/disparoQueue');
             const queue = getDisparoQueue();
-            
+
             const config = queue.getConfig();
-            
+
             res.json({
                 status: 'success',
                 data: config
@@ -1220,7 +1225,7 @@ class ApiController {
 
             const { getDisparoQueue } = require('../services/disparoQueue');
             const queue = getDisparoQueue();
-            
+
             const newConfig = {
                 minInterval: parseInt(minInterval),
                 maxInterval: parseInt(maxInterval),
@@ -1229,7 +1234,7 @@ class ApiController {
             };
 
             const updated = await queue.updateConfig(newConfig);
-            
+
             if (updated) {
                 res.json({
                     status: 'success',
@@ -1258,9 +1263,9 @@ class ApiController {
         try {
             const TypebotAPI = require('../config/typebot');
             const typebotAPI = TypebotAPI.getTypebotAPI();
-            
+
             const isConnected = await typebotAPI.testConnection();
-            
+
             res.json({
                 status: 'success',
                 data: {
@@ -1284,7 +1289,7 @@ class ApiController {
     static async testTypebotMessage(req, res) {
         try {
             const { phone, variables } = req.body;
-            
+
             // Validações
             if (!phone) {
                 return res.status(400).json({
@@ -1292,29 +1297,29 @@ class ApiController {
                     message: 'Número de telefone é obrigatório'
                 });
             }
-            
+
             if (!variables || !variables.name) {
                 return res.status(400).json({
                     status: 'error',
                     message: 'Nome do paciente é obrigatório'
                 });
             }
-            
+
             const TypebotAPI = require('../config/typebot');
             const typebotAPI = new TypebotAPI();
-            
+
             // Formatar dados
             const formattedPhone = typebotAPI.formatPhoneNumber(phone);
-            const formattedDate = variables.agendamento ? 
-                typebotAPI.formatDate(variables.agendamento) : 
+            const formattedDate = variables.agendamento ?
+                typebotAPI.formatDate(variables.agendamento) :
                 'Data não informada';
-            
+
             console.log('🧪 TESTE MANUAL - Enviando mensagem:');
             console.log(`📱 Telefone: ${phone} → ${formattedPhone}`);
             console.log(`👤 Nome: ${variables.name}`);
             console.log(`🏥 Procedimento: ${variables.procedimento || 'Não informado'}`);
             console.log(`📅 Agendamento: ${formattedDate}`);
-            
+
             // Enviar mensagem
             const response = await typebotAPI.sendMessage(
                 formattedPhone,
@@ -1322,9 +1327,9 @@ class ApiController {
                 formattedDate,
                 variables.procedimento || 'Procedimento não especificado'
             );
-            
+
             console.log('✅ TESTE MANUAL - Mensagem enviada com sucesso:', response);
-            
+
             res.json({
                 status: 'success',
                 data: {
@@ -1355,15 +1360,15 @@ class ApiController {
         try {
             const TypebotAPI = require('../config/typebot');
             const typebotAPI = TypebotAPI.getTypebotAPI();
-            
+
             const config = typebotAPI.getConfig();
-            
+
             console.log('📋 Retornando configurações para frontend:', {
                 url: config.url,
                 apiKey: config.apiKey ? '***redacted***' : 'não definida',
                 httpMethod: config.httpMethod
             });
-            
+
             res.json({
                 status: 'success',
                 data: config,
@@ -1384,7 +1389,7 @@ class ApiController {
     static async saveTypebotConfig(req, res) {
         try {
             const { url, apiKey, httpMethod, customHeaders, payloadTemplate } = req.body;
-            
+
             if (!url || !apiKey) {
                 return res.status(400).json({
                     status: 'error',
@@ -1424,7 +1429,7 @@ class ApiController {
                         .replace(/\{procedimento\}/g, '"Test Procedure"')
                         .replace(/"\{test\}"/g, 'false')
                         .replace(/\{test\}/g, 'false');
-                    
+
                     JSON.parse(testTemplate);
                 } catch (error) {
                     return res.status(400).json({
@@ -1436,7 +1441,7 @@ class ApiController {
 
             const TypebotAPI = require('../config/typebot');
             const typebotAPI = TypebotAPI.getTypebotAPI();
-            
+
             console.log('💾 Salvando configurações no controller:', {
                 url,
                 apiKey: apiKey ? '***redacted***' : 'não definida',
@@ -1444,7 +1449,7 @@ class ApiController {
                 customHeaders,
                 payloadTemplate: payloadTemplate ? 'definido' : 'não definido'
             });
-            
+
             await typebotAPI.saveConfig({
                 url,
                 apiKey,
@@ -1452,7 +1457,7 @@ class ApiController {
                 customHeaders: customHeaders || {},
                 payloadTemplate: payloadTemplate || null
             });
-            
+
             res.json({
                 status: 'success',
                 message: 'Configurações do Webhook salvas com sucesso',
@@ -1474,7 +1479,7 @@ class ApiController {
     static async testTypebotConnectionCustom(req, res) {
         try {
             const { url, apiKey, httpMethod, customHeaders, payloadTemplate } = req.body;
-            
+
             if (!url || !apiKey) {
                 return res.status(400).json({
                     status: 'error',
@@ -1484,7 +1489,7 @@ class ApiController {
 
             const TypebotAPI = require('../config/typebot');
             const typebotAPI = new TypebotAPI();
-            
+
             const testConfig = {
                 url,
                 apiKey,
@@ -1492,9 +1497,9 @@ class ApiController {
                 customHeaders: customHeaders || {},
                 payloadTemplate: payloadTemplate || null
             };
-            
+
             const result = await typebotAPI.testConnection(testConfig);
-            
+
             res.json({
                 status: result.success ? 'success' : 'error',
                 data: result,
@@ -1515,7 +1520,7 @@ class ApiController {
     static async testTypebotMessageCustom(req, res) {
         try {
             const { phone, variables, url, apiKey, httpMethod, customHeaders, payloadTemplate } = req.body;
-            
+
             if (!phone || !variables) {
                 return res.status(400).json({
                     status: 'error',
@@ -1525,7 +1530,7 @@ class ApiController {
 
             const TypebotAPI = require('../config/typebot');
             const typebotAPI = new TypebotAPI();
-            
+
             // Se configurações específicas foram fornecidas, usar elas; senão usar as padrão
             const testConfig = (url && apiKey) ? {
                 url,
@@ -1534,13 +1539,13 @@ class ApiController {
                 customHeaders: customHeaders || {},
                 payloadTemplate: payloadTemplate || null
             } : null;
-            
+
             const result = await typebotAPI.testMessage({
                 phone,
                 variables,
                 config: testConfig
             });
-            
+
             res.json({
                 status: result.success ? 'success' : 'error',
                 data: result,
@@ -1562,9 +1567,9 @@ class ApiController {
         try {
             const TypebotAPI = require('../config/typebot');
             const typebotAPI = new TypebotAPI();
-            
+
             await typebotAPI.resetConfig();
-            
+
             res.json({
                 status: 'success',
                 message: 'Configurações restauradas para padrão',
@@ -1577,6 +1582,353 @@ class ApiController {
             res.status(500).json({
                 status: 'error',
                 message: 'Erro ao restaurar configurações do Typebot',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+    }
+
+    // GET /api/solicitacoes - Buscar todas as solicitações com filtros
+    static async getAllSolicitacoes(req, res) {
+        const db = require('../config/database');
+
+        try {
+            const client = await db.pool.connect();
+
+            // Parâmetros de filtro da query string
+            const {
+                source_id,
+                status,
+                situacao,
+                classificacao_risco,
+                profissional,
+                data_inicial,
+                data_final,
+                paciente,
+                procedimento,
+                page = 1,
+                limit = 100
+            } = req.query;
+
+            // Construir a query dinamicamente baseada nos filtros
+            let whereConditions = [];
+            let queryParams = [];
+            let paramIndex = 1;
+
+            if (source_id) {
+                whereConditions.push(`s.source_id = $${paramIndex}`);
+                queryParams.push(parseInt(source_id));
+                paramIndex++;
+            }
+
+            if (status) {
+                whereConditions.push(`s.status = $${paramIndex}`);
+                queryParams.push(status);
+                paramIndex++;
+            }
+
+            if (situacao) {
+                whereConditions.push(`s.situacao = $${paramIndex}`);
+                queryParams.push(situacao);
+                paramIndex++;
+            }
+
+            if (classificacao_risco) {
+                whereConditions.push(`s.classificacao_risco = $${paramIndex}`);
+                queryParams.push(classificacao_risco);
+                paramIndex++;
+            }
+
+            if (profissional) {
+                whereConditions.push(`s.profissional_solicitante ILIKE $${paramIndex}`);
+                queryParams.push(`%${profissional}%`);
+                paramIndex++;
+            }
+
+            if (paciente) {
+                whereConditions.push(`s.paciente ILIKE $${paramIndex}`);
+                queryParams.push(`%${paciente}%`);
+                paramIndex++;
+            }
+
+            if (procedimento) {
+                whereConditions.push(`s.procedimento ILIKE $${paramIndex}`);
+                queryParams.push(`%${procedimento}%`);
+                paramIndex++;
+            }
+
+            if (data_inicial) {
+                whereConditions.push(`s.data_hora >= $${paramIndex}`);
+                queryParams.push(data_inicial);
+                paramIndex++;
+            }
+
+            if (data_final) {
+                whereConditions.push(`s.data_hora <= $${paramIndex}`);
+                queryParams.push(data_final + ' 23:59:59');
+                paramIndex++;
+            }
+
+            // Construir WHERE clause
+            const whereClause = whereConditions.length > 0
+                ? 'WHERE ' + whereConditions.join(' AND ')
+                : '';
+
+            // Calcular offset para paginação
+            const offset = (parseInt(page) - 1) * parseInt(limit);
+
+            // Query principal com joins para obter informações das sources
+            const query = `
+                SELECT 
+                    s.id,
+                    s.solicitacao,
+                    s.paciente,
+                    s.procedimento,
+                    s.data_hora,
+                    s.situacao,
+                    s.profissional_solicitante,
+                    s.classificacao_risco,
+                    s.celular_telefone,
+                    s.identificacao_paciente,
+                    s.observacao,
+                    s.status,
+                    s.schedule,
+                    s.source_id,
+                    src.nome as source_nome,
+                    s.created_at,
+                    s.updated_at
+                FROM solicitacoes s
+                LEFT JOIN sources src ON s.source_id = src.id
+                ${whereClause}
+                ORDER BY s.created_at DESC, s.data_hora DESC
+                LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+            `;
+
+            queryParams.push(parseInt(limit), offset);
+
+            // Query para contar total de registros
+            const countQuery = `
+                SELECT COUNT(*) as total
+                FROM solicitacoes s
+                LEFT JOIN sources src ON s.source_id = src.id
+                ${whereClause}
+            `;
+
+            // Executar ambas as queries
+            const [result, countResult] = await Promise.all([
+                client.query(query, queryParams),
+                client.query(countQuery, queryParams.slice(0, -2)) // Remove limit e offset para contagem
+            ]);
+
+            // Processar dados de schedule se existirem
+            const solicitacoes = result.rows.map(row => ({
+                ...row,
+                schedule: row.schedule ? (typeof row.schedule === 'string' ? JSON.parse(row.schedule) : row.schedule) : null
+            }));
+
+            const total = parseInt(countResult.rows[0].total);
+            const totalPages = Math.ceil(total / parseInt(limit));
+
+            client.release();
+
+            res.json({
+                status: 'success',
+                data: {
+                    solicitacoes,
+                    pagination: {
+                        page: parseInt(page),
+                        limit: parseInt(limit),
+                        total,
+                        totalPages,
+                        hasNext: parseInt(page) < totalPages,
+                        hasPrev: parseInt(page) > 1
+                    },
+                    filters: {
+                        source_id: source_id || null,
+                        status: status || null,
+                        situacao: situacao || null,
+                        classificacao_risco: classificacao_risco || null,
+                        profissional: profissional || null,
+                        data_inicial: data_inicial || null,
+                        data_final: data_final || null,
+                        paciente: paciente || null,
+                        procedimento: procedimento || null
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('❌ Erro ao buscar todas as solicitações:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Erro interno do servidor',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+    }
+
+    // GET /api/solicitacoes/filters - Buscar valores únicos para filtros
+    static async getSolicitacoesFilters(req, res) {
+        const db = require('../config/database');
+
+        try {
+            const client = await db.pool.connect();
+
+            // Buscar valores únicos para cada campo de filtro
+            const queries = {
+                situacoes: 'SELECT DISTINCT situacao FROM solicitacoes WHERE situacao IS NOT NULL AND situacao != \'\' ORDER BY situacao',
+                classificacoes_risco: 'SELECT DISTINCT classificacao_risco FROM solicitacoes WHERE classificacao_risco IS NOT NULL AND classificacao_risco != \'\' ORDER BY classificacao_risco',
+                profissionais: 'SELECT DISTINCT profissional_solicitante FROM solicitacoes WHERE profissional_solicitante IS NOT NULL AND profissional_solicitante != \'\' ORDER BY profissional_solicitante',
+                status: 'SELECT DISTINCT status FROM solicitacoes WHERE status IS NOT NULL AND status != \'\' ORDER BY status'
+            };
+
+            const results = {};
+
+            for (const [key, query] of Object.entries(queries)) {
+                const result = await client.query(query);
+                results[key] = result.rows.map(row => Object.values(row)[0]);
+            }
+
+            client.release();
+
+            res.json({
+                status: 'success',
+                data: results
+            });
+
+        } catch (error) {
+            console.error('❌ Erro ao buscar filtros:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Erro interno do servidor',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+    }
+
+    // PUT /api/solicitacoes/:id/observacao - Atualizar observação de uma solicitação
+    static async updateObservacao(req, res) {
+        const db = require('../config/database');
+
+        try {
+            const client = await db.pool.connect();
+            const { id } = req.params;
+            const { observacao } = req.body;
+
+            // Validar parâmetros
+            if (!id || isNaN(parseInt(id))) {
+                client.release();
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'ID da solicitação inválido'
+                });
+            }
+
+            // Verificar se a solicitação existe
+            const checkResult = await client.query('SELECT id FROM solicitacoes WHERE id = $1', [id]);
+            if (checkResult.rows.length === 0) {
+                client.release();
+                return res.status(404).json({
+                    status: 'error',
+                    message: 'Solicitação não encontrada'
+                });
+            }
+
+            // Atualizar observação
+            const updateResult = await client.query(
+                'UPDATE solicitacoes SET observacao = $1, updated_at = NOW() WHERE id = $2 RETURNING observacao',
+                [observacao || null, id]
+            );
+
+            client.release();
+
+            res.json({
+                status: 'success',
+                message: 'Observação atualizada com sucesso',
+                data: {
+                    id: parseInt(id),
+                    observacao: updateResult.rows[0].observacao
+                }
+            });
+
+        } catch (error) {
+            console.error('❌ Erro ao atualizar observação:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Erro interno do servidor',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+    }
+
+    // GET /api/pdf-extractor - Proxy para status do serviço PDF
+    static async getPdfExtractorStatus(req, res) {
+        try {
+            const fetch = require('node-fetch');
+            const pdfServiceUrl = process.env.PDF_EXTRACTOR_URL || 'http://pdf-extractor:5000';
+
+            const response = await fetch(pdfServiceUrl, {
+                timeout: 5000 // 5 segundos timeout
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            res.json(data);
+
+        } catch (error) {
+            console.error('❌ Erro ao conectar com serviço PDF:', error);
+            res.status(503).json({
+                status: 'error',
+                message: 'Serviço de extração de PDF indisponível',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+    }
+
+    // POST /api/pdf-extractor/upload - Proxy para upload de PDF
+    static async uploadPdf(req, res) {
+        try {
+            const fetch = require('node-fetch');
+            const FormData = require('form-data');
+            const pdfServiceUrl = process.env.PDF_EXTRACTOR_URL || 'http://pdf-extractor:5000';
+
+            // Criar FormData e anexar o arquivo
+            const form = new FormData();
+
+            // Se estiver usando multer ou similar, req.file terá o arquivo
+            if (req.file) {
+                form.append('file', req.file.buffer, {
+                    filename: req.file.originalname,
+                    contentType: req.file.mimetype
+                });
+            } else {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Nenhum arquivo foi enviado'
+                });
+            }
+
+            const response = await fetch(`${pdfServiceUrl}/upload`, {
+                method: 'POST',
+                body: form,
+                timeout: 30000 // 30 segundos timeout para upload
+            });
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorData}`);
+            }
+
+            const data = await response.json();
+            res.json(data);
+
+        } catch (error) {
+            console.error('❌ Erro ao fazer upload via proxy:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Erro ao processar arquivo PDF',
                 error: process.env.NODE_ENV === 'development' ? error.message : undefined
             });
         }

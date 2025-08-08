@@ -116,15 +116,44 @@ def insert_data(data, source_id):
     
     for item in data:
         solicitacao = item.get('Solicitação')
-        if solicitacao and str(solicitacao).strip():  # Verifica se não é None, vazio ou só espaços
-            valid_data.append(item)
-        else:
+        paciente = item.get('Paciente', 'N/A')
+        procedimento = item.get('Procedimento', 'N/A')
+        
+        # Verificar se solicitação é válida
+        if not solicitacao or not str(solicitacao).strip():
             invalid_records.append({
-                'paciente': item.get('Paciente', 'N/A'),
-                'procedimento': item.get('Procedimento', 'N/A'),
-                'motivo': 'Número de solicitação inválido ou vazio'
+                'paciente': paciente,
+                'procedimento': procedimento,
+                'motivo': 'Número de solicitação inválido ou vazio',
+                'solicitacao': solicitacao or 'Vazio'
             })
             print(f"Registro ignorado por ter solicitacao inválida: {item}")
+            continue
+            
+        # Verificar se paciente é válido
+        if not paciente or not str(paciente).strip():
+            invalid_records.append({
+                'paciente': 'Nome vazio',
+                'procedimento': procedimento,
+                'motivo': 'Nome do paciente está vazio',
+                'solicitacao': solicitacao
+            })
+            print(f"Registro ignorado por ter paciente inválido: {item}")
+            continue
+            
+        # Verificar se procedimento é válido
+        if not procedimento or not str(procedimento).strip():
+            invalid_records.append({
+                'paciente': paciente,
+                'procedimento': 'Procedimento vazio',
+                'motivo': 'Procedimento não informado',
+                'solicitacao': solicitacao
+            })
+            print(f"Registro ignorado por ter procedimento inválido: {item}")
+            continue
+            
+        # Se chegou até aqui, o registro é válido
+        valid_data.append(item)
     
     if not valid_data:
         print("Nenhum registro válido para inserir após filtragem.")
@@ -194,7 +223,7 @@ def insert_data(data, source_id):
             # Calcular quantos foram realmente inseridos
             inserted_count = count_after - count_before
             
-            # Identificar registros duplicados
+            # Identificar registros duplicados com mais detalhes
             duplicates = []
             for item in valid_data:
                 solicitacao_num = item.get('Solicitação')
@@ -203,7 +232,9 @@ def insert_data(data, source_id):
                         'solicitacao': solicitacao_num,
                         'paciente': item.get('Paciente', 'N/A'),
                         'procedimento': item.get('Procedimento', 'N/A'),
-                        'paciente_existente': existing_solicitacoes[solicitacao_num]
+                        'paciente_existente': existing_solicitacoes[solicitacao_num],
+                        'data_hora': item.get('Data/Hora', 'N/A'),
+                        'motivo': f'Solicitação {solicitacao_num} já existe na lista'
                     })
             
             conn.commit()

@@ -10,12 +10,10 @@ services:
       - PORT=3000
       - DATABASE_URL=postgresql://postgres:21F5F7196AADADADA444DADRFSVVXB35A858629D65D752C8@193.203.174.146:5432/morrinhos?sslmode=disable
       - REDIS_URL=redis://redis:6379
+      - PDF_EXTRACTOR_URL=http://pdf-extractor:5000
     depends_on:
       # - postgres  # Comentado - usando PostgreSQL da VPS
       - redis
-    volumes:
-      - .:/app
-      - /app/node_modules
     networks:
       - morrinhos-network
     restart: unless-stopped
@@ -93,9 +91,6 @@ services:
     depends_on:
       # - postgres  # Comentado - usando PostgreSQL da VPS
       - redis
-    volumes:
-      - ./services/pdf_extractor:/app
-      - /app/__pycache__
     networks:
       - morrinhos-network
     restart: unless-stopped
