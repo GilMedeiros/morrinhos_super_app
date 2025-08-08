@@ -1,0 +1,109 @@
+services:
+  # Aplicação Node.js
+  app:
+    build: .
+    container_name: morrinhos-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:21F5F7196AADADADA444DADRFSVVXB35A858629D65D752C8@193.203.174.146:5432/morrinhos?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      # - postgres  # Comentado - usando PostgreSQL da VPS
+      - redis
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - morrinhos-network
+    restart: unless-stopped
+
+  # Banco de dados PostgreSQL - COMENTADO (usando VPS)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: morrinhos-postgres
+  #   environment:
+  #     - POSTGRES_DB=morrinhos
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres123
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   networks:
+  #     - morrinhos-network
+  #   restart: unless-stopped
+
+  # Cache Redis
+  redis:
+    image: redis:7-alpine
+    container_name: morrinhos-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - morrinhos-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Admin do PostgreSQL - COMENTADO (usando VPS)
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: morrinhos-pgadmin
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=admin@morrinhos.com
+  #     - PGADMIN_DEFAULT_PASSWORD=admin123
+  #   ports:
+  #     - "8080:80"
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     - morrinhos-network
+  #   restart: unless-stopped
+
+  # Redis Commander (opcional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: morrinhos-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - morrinhos-network
+    restart: unless-stopped
+
+  # Serviço Python para extração de PDF
+  pdf-extractor:
+    build: 
+      context: ./services/pdf_extractor
+      dockerfile: Dockerfile
+    container_name: morrinhos-pdf-extractor
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://postgres:21F5F7196AADADADA444DADRFSVVXB35A858629D65D752C8@193.203.174.146:5432/morrinhos?sslmode=disable
+    depends_on:
+      # - postgres  # Comentado - usando PostgreSQL da VPS
+      - redis
+    volumes:
+      - ./services/pdf_extractor:/app
+      - /app/__pycache__
+    networks:
+      - morrinhos-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  morrinhos-network:
+    driver: bridge

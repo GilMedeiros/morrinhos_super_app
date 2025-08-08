@@ -1,0 +1,34 @@
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container">
+        <a class="navbar-brand" href="/"><i class="bi bi-file-earmark-pdf me-2"></i>Conecta x Morrinhos</a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link <%= (typeof currentPage !== 'undefined' && (currentPage === 'disparo' || currentPage === 'index')) ? 'active' : '' %>" href="/">
+                        <i class="bi bi-send me-1"></i>Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= (typeof currentPage !== 'undefined' && currentPage === 'upload') ? 'active' : '' %>" href="/upload">
+                        <i class="bi bi-cloud-upload me-1"></i>Upload
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= (typeof currentPage !== 'undefined' && currentPage === 'disparos') ? 'active' : '' %>" href="/disparos">
+                        <i class="bi bi-list-check me-1"></i>Disparos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= (typeof currentPage !== 'undefined' && currentPage === 'configuracoes') ? 'active' : '' %>" href="/configuracoes">
+                        <i class="bi bi-gear me-1"></i>Configurações
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
