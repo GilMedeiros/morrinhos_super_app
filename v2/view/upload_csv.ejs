@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<%- include('partials/header') %>
+<body>
+<%- include('partials/nav') %>
+    <div class="main-container">
+        <div class="logo-compact">
+            <img src="img/conecta.png" alt="Logo Conecta" style="height: 40px; margin-right: 10px;">
+            <img src="img/morrinhos.png" alt="Logo Morrinhos" style="height: 40px;">
+        </div>
+        <div class="card main-card">
+            <div class="card-header">
+                <h2 class="mb-1">
+                    <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+                    Upload de CSV
+                </h2>
+                <p class="mb-0 opacity-75">Extraia dados de arquivos CSV dinâmicos</p>
+            </div>
+            <div class="card-body">
+                <!-- Área de Upload -->
+                <div class="upload-area" id="uploadArea">
+                    <i class="bi bi-cloud-upload upload-icon"></i>
+                    <h5 class="mb-2">Arraste seu CSV aqui</h5>
+                    <p class="text-muted mb-3">ou clique para selecionar</p>
+                    <!-- <button type="button" class="btn btn-custom" id="selectFileBtn"> -->
+                    <button type="button" class="btn btn-custom">
+                        <i class="bi bi-file-plus me-2"></i>
+                        Selecionar Arquivo
+                    </button>
+                    <input type="file" id="csvFile" class="d-none" accept=".csv,text/csv">
+                </div>
+                <div class="info-compact">
+                    <small>
+                        <i class="bi bi-info-circle me-1"></i>
+                        Máximo: <strong>50MB</strong> | Apenas <strong>.CSV</strong> | Obrigatório ter as colunas: <strong>nome</strong>, <strong>telefone</strong>
+                    </small>
+                </div>
+                <!-- Preview do arquivo -->
+                <div class="d-none result-card result-success" id="fileInfo">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="bi bi-file-check me-2"></i>
+                                <span id="fileName">arquivo.csv</span>
+                            </h6>
+                            <small class="text-muted" id="fileSize">0 KB</small>
+                        </div>
+                        <button type="button" class="btn btn-custom" id="processBtn">
+                            <i class="bi bi-gear me-2"></i>
+                            Processar
+                        </button>
+                    </div>
+                </div>
+                <!-- Progresso -->
+                <div class="d-none" id="progressContainer">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">Processando CSV...</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-custom">
+                        <div class="progress-bar-custom" id="progressBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <!-- Resultado -->
+                <div class="d-none" id="resultArea">
+                    <div class="result-card" id="resultCard">
+                        <h5 id="resultTitle" class="mb-3"></h5>
+                        <div id="resultContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <link rel="stylesheet" href="/css/styles-fixed.css"> -->
+    <link rel="stylesheet" href="/css/csv-processor.css">
+    <script src="/js/upload_csv.js"></script>
+<%- include('partials/footer') %>
+</body>
+</html>

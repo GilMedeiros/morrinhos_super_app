@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .hero {
+            text-align: center;
+            padding: 50px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .feature {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>Welcome to <%= title %></h1>
+            <p>Your Express.js server is running successfully!</p>
+            <button id="test-api" class="btn">Test API</button>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>Express.js</h3>
+                <p>Fast, unopinionated, minimalist web framework for Node.js</p>
+            </div>
+            <div class="feature">
+                <h3>EJS Templates</h3>
+                <p>Simple templating language that lets you generate HTML with JavaScript</p>
+            </div>
+            <div class="feature">
+                <h3>MVC Structure</h3>
+                <p>Organized code with Models, Views, and Controllers</p>
+            </div>
+            <div class="feature">
+                <h3>📄 PDF Processing</h3>
+                <p>Upload and extract data from PDF documents automatically</p>
+                <a href="/upload" class="btn" style="margin-top: 10px;">Upload PDF</a>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/about" class="btn">About Us</a>
+            <a href="/api" class="btn" style="margin-left: 10px;">API Status</a>
+        </div>
+    </div>
+    <script src="/script.js"></script>
+    
+</body>
+</html>

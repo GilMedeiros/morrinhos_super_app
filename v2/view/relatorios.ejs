@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<%- include('partials/header') %>
+<!-- Adicionar jsPDF e autoTable para geração de PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<style>
+    /* Estilos específicos para relatórios */
+    .filters-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 15px;
+        font-weight: 600;
+    }
+    
+    .btn-export {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-export:hover {
+        background: linear-gradient(135deg, #218838 0%, #1ea872 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+    
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+        border: none;
+        background: #f8f9fa;
+        color: #6c757d;
+    }
+    
+    .pagination .page-link:hover {
+        background: #007bff;
+        color: white;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: #007bff;
+        border-color: #007bff;
+    }
+</style>
+<body>
+    <%- include('partials/nav') %>
+    
+    <!-- Main Content -->
+    <div class="container-fluid mt-3">
+        <!-- Header Section -->
+        <div class="text-center mb-4">
+            <div class="d-flex justify-content-center gap-3 align-items-center mb-3">
+                <img src="img/conecta.png" alt="Logo Conecta" style="height: 40px;">
+                <img src="img/morrinhos.png" alt="Logo Morrinhos" style="height: 40px;">
+            </div>
+        </div>
+
+        <!-- Page Header -->
+        <div class="row justify-content-center">
+            <div class="col-lg-11">
+                <div class="card main-card mb-4">
+                    <div class="card-header text-center">
+                        <h2 class="mb-1">
+                            <i class="bi bi-graph-up me-2"></i>
+                            Relatórios de Solicitações
+                        </h2>
+                        <p class="mb-0 opacity-75">Visualize e analise dados das solicitações processadas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-11">
+                <div class="card filters-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-funnel me-2"></i>
+                            Filtros de Pesquisa
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="filtersForm">
+                            <div class="row">
+                                <!-- Filtros básicos -->
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Buscar Paciente</label>
+                                    <input type="text" class="form-control" id="filterPaciente" placeholder="Nome do paciente...">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Profissional</label>
+                                    <input type="text" class="form-control" id="filterProfissional" placeholder="Nome do profissional...">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Lista (Source)</label>
+                                    <select class="form-select" id="filterSource">
+                                        <option value="">Todas as listas</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- Filtros avançados -->
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Situação</label>
+                                    <select class="form-select" id="filterSituacao">
+                                        <option value="">Todas as situações</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Status Disparo</label>
+                                    <select class="form-select" id="filterStatus">
+                                        <option value="">Todos os status</option>
+                                        <option value="pendente">Pendente</option>
+                                        <option value="em_fila">Em Fila</option>
+                                        <option value="enviado">Enviado</option>
+                                        <option value="respondido">Respondido</option>
+                                        <option value="agendado">Agendado</option>
+                                        <option value="rejeitado">Rejeitado</option>
+                                        <option value="sem_resposta">Sem Resposta</option>
+                                        <option value="cancelado">Cancelado</option>
+                                        <option value="erro">Erro</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Classificação de Risco</label>
+                                    <select class="form-select" id="filterClassificacaoRisco">
+                                        <option value="">Todas as classificações</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Registros por página</label>
+                                    <select class="form-select" id="limitSelect">
+                                        <option value="50">50 registros</option>
+                                        <option value="100" selected>100 registros</option>
+                                        <option value="200">200 registros</option>
+                                        <option value="500">500 registros</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- Filtros de data -->
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Data Inicial</label>
+                                    <input type="date" class="form-control" id="filterDataInicial">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">Data Final</label>
+                                    <input type="date" class="form-control" id="filterDataFinal">
+                                </div>
+                                <div class="col-md-6 mb-3 d-flex align-items-end">
+                                    <div class="btn-group w-100" role="group">
+                                        <button type="button" class="btn btn-primary" id="btnPesquisar">
+                                            <i class="bi bi-search me-2"></i>Pesquisar
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
+                                            <i class="bi bi-x-circle me-2"></i>Limpar
+                                        </button>
+                                        <button type="button" class="btn btn-export" id="btnExportar">
+                                            <i class="bi bi-file-earmark-pdf me-2"></i>Exportar PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row justify-content-center mb-4" id="statsContainer" style="display: none;">
+            <div class="col-lg-11">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary mb-1" id="totalSolicitacoes">0</h3>
+                                <p class="mb-0 text-muted">Total de Solicitações</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <h3 class="text-success mb-1" id="totalEnviados">0</h3>
+                                <p class="mb-0 text-muted">Disparos Enviados</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <h3 class="text-warning mb-1" id="totalPendentes">0</h3>
+                                <p class="mb-0 text-muted">Pendentes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <h3 class="text-info mb-1" id="totalAgendados">0</h3>
+                                <p class="mb-0 text-muted">Agendados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="row justify-content-center" id="loadingState">
+            <div class="col-lg-11">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <h5>Carregando dados...</h5>
+                        <p class="text-muted">Aguarde enquanto buscamos as informações</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- No Data State -->
+        <div class="row justify-content-center d-none" id="noDataState">
+            <div class="col-lg-11">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-search display-1 text-muted mb-3"></i>
+                        <h5>Nenhum resultado encontrado</h5>
+                        <p class="text-muted">Tente ajustar os filtros de pesquisa ou verificar se há dados disponíveis.</p>
+                        <button class="btn btn-outline-primary" id="btnLimparFiltrosNoData">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="row justify-content-center d-none" id="resultsContainer">
+            <div class="col-lg-11">
+                <div class="table-container">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th width="80">ID Sol.</th>
+                                    <th width="120">ID Paciente</th>
+                                    <th>Paciente</th>
+                                    <th>Procedimento</th>
+                                    <th width="130">Data/Hora</th>
+                                    <th width="120">Situação</th>
+                                    <th width="140">Classificação Risco</th>
+                                    <th>Profissional</th>
+                                    <th width="120">Status Disparo</th>
+                                    <th width="130">Telefone</th>
+                                    <th width="200">Observação</th>
+                                    <th width="120">Lista</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody">
+                                <!-- Dados serão inseridos aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="card-footer bg-light">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <small class="text-muted" id="paginationInfo">
+                                    Mostrando 0 de 0 registros
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <nav aria-label="Navegação de páginas">
+                                    <ul class="pagination pagination-sm justify-content-end mb-0" id="pagination">
+                                        <!-- Paginação será inserida aqui -->
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        let currentPage = 1;
+        let currentFilters = {};
+        let allData = null;
+
+        // Elementos DOM
+        const loadingState = document.getElementById('loadingState');
+        const noDataState = document.getElementById('noDataState');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const statsContainer = document.getElementById('statsContainer');
+        const resultsTableBody = document.getElementById('resultsTableBody');
+        const paginationInfo = document.getElementById('paginationInfo');
+        const pagination = document.getElementById('pagination');
+
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInitialData();
+            setupEventListeners();
+        });
+
+        // Carregar dados iniciais
+        async function loadInitialData() {
+            try {
+                // Carregar sources para o filtro
+                await loadSources();
+                
+                // Carregar filtros únicos
+                await loadFilters();
+                
+                // Carregar dados iniciais sem filtros
+                await searchSolicitacoes();
+                
+            } catch (error) {
+                console.error('Erro ao carregar dados iniciais:', error);
+                showError('Erro ao carregar dados iniciais');
+            }
+        }
+
+        // Carregar sources para o select
+        async function loadSources() {
+            try {
+                const response = await fetch('/api/sources');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const select = document.getElementById('filterSource');
+                    data.data.forEach(source => {
+                        const option = document.createElement('option');
+                        option.value = source.id;
+                        option.textContent = source.nome;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar sources:', error);
+            }
+        }
+
+        // Carregar filtros únicos
+        async function loadFilters() {
+            try {
+                const response = await fetch('/api/solicitacoes/filters');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const filters = data.data;
+                    
+                    // Situações
+                    populateSelect('filterSituacao', filters.situacoes, 'Todas as situações');
+                    
+                    // Classificações de risco
+                    populateSelect('filterClassificacaoRisco', filters.classificacoes_risco, 'Todas as classificações');
+                    
+                    // Profissionais (não popular automaticamente pois pode ser muitos)
+                    // O campo de profissional permanece como input text para busca
+                }
+            } catch (error) {
+                console.error('Erro ao carregar filtros:', error);
+            }
+        }
+
+        // Popular select com opções
+        function populateSelect(selectId, options, defaultText) {
+            const select = document.getElementById(selectId);
+            // Manter a opção "Todos"
+            select.innerHTML = `<option value="">${defaultText}</option>`;
+            
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+        }
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Botão pesquisar
+            document.getElementById('btnPesquisar').addEventListener('click', function() {
+                currentPage = 1;
+                searchSolicitacoes();
+            });
+
+            // Botão limpar filtros
+            document.getElementById('btnLimparFiltros').addEventListener('click', clearFilters);
+            document.getElementById('btnLimparFiltrosNoData').addEventListener('click', clearFilters);
+
+            // Botão exportar
+            document.getElementById('btnExportar').addEventListener('click', exportData);
+
+            // Enter nos campos de input
+            const inputFields = ['filterPaciente', 'filterProcedimento', 'filterProfissional'];
+            inputFields.forEach(fieldId => {
+                document.getElementById(fieldId).addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        currentPage = 1;
+                        searchSolicitacoes();
+                    }
+                });
+            });
+
+            // Mudança no limite de registros
+            document.getElementById('limitSelect').addEventListener('change', function() {
+                currentPage = 1;
+                searchSolicitacoes();
+            });
+        }
+
+        // Buscar solicitações
+        async function searchSolicitacoes() {
+            showState('loading');
+            
+            try {
+                // Coletar filtros
+                const filters = collectFilters();
+                filters.page = currentPage;
+                filters.limit = document.getElementById('limitSelect').value;
+                
+                currentFilters = filters;
+
+                // Construir query string
+                const queryString = new URLSearchParams(filters).toString();
+                
+                // Fazer requisição
+                const response = await fetch(`/api/solicitacoes?${queryString}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    allData = data.data;
+                    
+                    if (allData.solicitacoes.length === 0) {
+                        showState('noData');
+                    } else {
+                        renderResults();
+                        updateStats();
+                        showState('results');
+                    }
+                } else {
+                    throw new Error(data.message || 'Erro ao buscar dados');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao buscar solicitações:', error);
+                showError('Erro ao buscar dados: ' + error.message);
+                showState('noData');
+            }
+        }
+
+        // Coletar filtros do formulário
+        function collectFilters() {
+            const filters = {};
+            
+            const paciente = document.getElementById('filterPaciente').value.trim();
+            if (paciente) filters.paciente = paciente;
+            
+            const procedimento = document.getElementById('filterProcedimento').value.trim();
+            if (procedimento) filters.procedimento = procedimento;
+            
+            const profissional = document.getElementById('filterProfissional').value.trim();
+            if (profissional) filters.profissional = profissional;
+            
+            const source_id = document.getElementById('filterSource').value;
+            if (source_id) filters.source_id = source_id;
+            
+            const situacao = document.getElementById('filterSituacao').value;
+            if (situacao) filters.situacao = situacao;
+            
+            const status = document.getElementById('filterStatus').value;
+            if (status) filters.status = status;
+            
+            const classificacao_risco = document.getElementById('filterClassificacaoRisco').value;
+            if (classificacao_risco) filters.classificacao_risco = classificacao_risco;
+            
+            const data_inicial = document.getElementById('filterDataInicial').value;
+            if (data_inicial) filters.data_inicial = data_inicial;
+            
+            const data_final = document.getElementById('filterDataFinal').value;
+            if (data_final) filters.data_final = data_final;
+            
+            return filters;
+        }
+
+        // Limpar filtros
+        function clearFilters() {
+            document.getElementById('filtersForm').reset();
+            currentPage = 1;
+            searchSolicitacoes();
+        }
+
+        // Renderizar resultados na tabela
+        function renderResults() {
+            resultsTableBody.innerHTML = '';
+            
+            allData.solicitacoes.forEach(sol => {
+                const row = createTableRow(sol);
+                resultsTableBody.appendChild(row);
+            });
+            
+            updatePagination();
+        }
+
+        // Criar linha da tabela
+        function createTableRow(sol) {
+            const tr = document.createElement('tr');
+            
+            tr.innerHTML = `
+                <td><small class="text-muted">#${sol.solicitacao || sol.id}</small></td>
+                <td><small class="text-primary font-monospace">${sol.identificacao_paciente || '-'}</small></td>
+                <td>${sol.paciente || '-'}</td>
+                <td class="text-truncate" title="${sol.procedimento || ''}" style="max-width: 200px;">
+                    ${sol.procedimento || '-'}
+                </td>
+                <td><small>${formatDateTime(sol.data_hora)}</small></td>
+                <td><span class="badge bg-info status-badge">${sol.situacao || '-'}</span></td>
+                <td><span class="badge ${getClassificacaoRiscoClass(sol.classificacao_risco)} status-badge">
+                    ${sol.classificacao_risco || '-'}
+                </span></td>
+                <td>${sol.profissional_solicitante || '-'}</td>
+                <td><span class="badge ${getStatusDisparoClass(sol.status)} status-badge">
+                    ${getStatusDisparoLabel(sol.status)}
+                </span></td>
+                <td>${sol.celular_telefone || '-'}</td>
+                <td class="text-truncate" title="${sol.observacao || ''}" style="max-width: 200px;">
+                    <small>${sol.observacao || '-'}</small>
+                </td>
+                <td><small class="text-muted">${sol.source_nome || '-'}</small></td>
+            `;
+            
+            return tr;
+        }
+
+        // Atualizar estatísticas
+        function updateStats() {
+            const total = allData.pagination.total;
+            const enviados = allData.solicitacoes.filter(s => s.status === 'enviado').length;
+            const pendentes = allData.solicitacoes.filter(s => s.status === 'pendente').length;
+            const agendados = allData.solicitacoes.filter(s => s.status === 'agendado').length;
+            
+            document.getElementById('totalSolicitacoes').textContent = total.toLocaleString();
+            document.getElementById('totalEnviados').textContent = enviados.toLocaleString();
+            document.getElementById('totalPendentes').textContent = pendentes.toLocaleString();
+            document.getElementById('totalAgendados').textContent = agendados.toLocaleString();
+        }
+
+        // Atualizar paginação
+        function updatePagination() {
+            const { page, limit, total, totalPages, hasNext, hasPrev } = allData.pagination;
+            
+            // Atualizar info de paginação
+            const start = (page - 1) * limit + 1;
+            const end = Math.min(page * limit, total);
+            paginationInfo.textContent = `Mostrando ${start}-${end} de ${total.toLocaleString()} registros`;
+            
+            // Limpar paginação
+            pagination.innerHTML = '';
+            
+            // Botão anterior
+            const prevItem = document.createElement('li');
+            prevItem.className = `page-item ${!hasPrev ? 'disabled' : ''}`;
+            prevItem.innerHTML = `<a class="page-link" href="#" data-page="${page - 1}">‹ Anterior</a>`;
+            pagination.appendChild(prevItem);
+            
+            // Páginas
+            const startPage = Math.max(1, page - 2);
+            const endPage = Math.min(totalPages, page + 2);
+            
+            if (startPage > 1) {
+                const firstItem = document.createElement('li');
+                firstItem.className = 'page-item';
+                firstItem.innerHTML = `<a class="page-link" href="#" data-page="1">1</a>`;
+                pagination.appendChild(firstItem);
+                
+                if (startPage > 2) {
+                    const dotsItem = document.createElement('li');
+                    dotsItem.className = 'page-item disabled';
+                    dotsItem.innerHTML = `<span class="page-link">...</span>`;
+                    pagination.appendChild(dotsItem);
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = `page-item ${i === page ? 'active' : ''}`;
+                pageItem.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+                pagination.appendChild(pageItem);
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dotsItem = document.createElement('li');
+                    dotsItem.className = 'page-item disabled';
+                    dotsItem.innerHTML = `<span class="page-link">...</span>`;
+                    pagination.appendChild(dotsItem);
+                }
+                
+                const lastItem = document.createElement('li');
+                lastItem.className = 'page-item';
+                lastItem.innerHTML = `<a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>`;
+                pagination.appendChild(lastItem);
+            }
+            
+            // Botão próximo
+            const nextItem = document.createElement('li');
+            nextItem.className = `page-item ${!hasNext ? 'disabled' : ''}`;
+            nextItem.innerHTML = `<a class="page-link" href="#" data-page="${page + 1}">Próximo ›</a>`;
+            pagination.appendChild(nextItem);
+            
+            // Event listeners da paginação
+            pagination.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (e.target.tagName === 'A' && e.target.dataset.page) {
+                    const newPage = parseInt(e.target.dataset.page);
+                    if (newPage !== page && newPage >= 1 && newPage <= totalPages) {
+                        currentPage = newPage;
+                        searchSolicitacoes();
+                    }
+                }
+            });
+        }
+
+        // Mostrar diferentes estados
+        function showState(state) {
+            loadingState.classList.add('d-none');
+            noDataState.classList.add('d-none');
+            resultsContainer.classList.add('d-none');
+            statsContainer.style.display = 'none';
+            
+            switch (state) {
+                case 'loading':
+                    loadingState.classList.remove('d-none');
+                    break;
+                case 'noData':
+                    noDataState.classList.remove('d-none');
+                    break;
+                case 'results':
+                    resultsContainer.classList.remove('d-none');
+                    statsContainer.style.display = 'block';
+                    break;
+            }
+        }
+
+        // Exportar dados
+        async function exportData() {
+            const btnExportar = document.getElementById('btnExportar');
+            const originalText = btnExportar.innerHTML;
+            
+            try {
+                // Mostrar loading no botão
+                btnExportar.disabled = true;
+                btnExportar.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Gerando PDF...';
+                
+                const filters = collectFilters();
+                filters.limit = 10000; // Exportar mais registros
+                
+                const queryString = new URLSearchParams(filters).toString();
+                const response = await fetch(`/api/solicitacoes?${queryString}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Mostrar toast de sucesso
+                    showSuccess(`Gerando PDF com ${data.data.solicitacoes.length} registros...`);
+                    
+                    // Pequeno delay para mostrar a mensagem antes de gerar o PDF
+                    setTimeout(() => {
+                        exportToPDF(data.data.solicitacoes);
+                        showSuccess('PDF gerado com sucesso!');
+                    }, 100);
+                } else {
+                    throw new Error(data.message || 'Erro ao exportar dados');
+                }
+            } catch (error) {
+                console.error('Erro ao exportar dados:', error);
+                showError('Erro ao exportar dados: ' + error.message);
+            } finally {
+                // Restaurar botão
+                setTimeout(() => {
+                    btnExportar.disabled = false;
+                    btnExportar.innerHTML = originalText;
+                }, 2000);
+            }
+        }
+
+        // Exportar para PDF
+        function exportToPDF(data) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+            
+            // Configurar fonte
+            doc.setFont('helvetica');
+            
+            // Cabeçalho do relatório
+            doc.setFontSize(20);
+            doc.setTextColor(40, 40, 40);
+            doc.text('Relatório de Solicitações', 14, 22);
+            
+            // Data de geração
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('pt-BR') + ' às ' + today.toLocaleTimeString('pt-BR');
+            doc.text(`Gerado em: ${dateStr}`, 14, 30);
+            
+            // Informações dos filtros aplicados
+            let filtersText = 'Filtros aplicados: ';
+            const activeFilters = [];
+            
+            if (currentFilters.paciente) activeFilters.push(`Paciente: ${currentFilters.paciente}`);
+            if (currentFilters.procedimento) activeFilters.push(`Procedimento: ${currentFilters.procedimento}`);
+            if (currentFilters.profissional) activeFilters.push(`Profissional: ${currentFilters.profissional}`);
+            if (currentFilters.situacao) activeFilters.push(`Situação: ${currentFilters.situacao}`);
+            if (currentFilters.status) activeFilters.push(`Status: ${currentFilters.status}`);
+            if (currentFilters.classificacao_risco) activeFilters.push(`Classificação: ${currentFilters.classificacao_risco}`);
+            if (currentFilters.data_inicial) activeFilters.push(`Data inicial: ${currentFilters.data_inicial}`);
+            if (currentFilters.data_final) activeFilters.push(`Data final: ${currentFilters.data_final}`);
+            
+            if (activeFilters.length > 0) {
+                filtersText += activeFilters.join(', ');
+            } else {
+                filtersText += 'Nenhum filtro aplicado';
+            }
+            
+            doc.setFontSize(8);
+            doc.text(filtersText, 14, 36);
+            
+            // Estatísticas resumidas
+            const totalSolicitacoes = data.length;
+            const enviados = data.filter(s => s.status === 'enviado').length;
+            const pendentes = data.filter(s => s.status === 'pendente').length;
+            const agendados = data.filter(s => s.status === 'agendado').length;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(40, 40, 40);
+            doc.text(`Total de Solicitações: ${totalSolicitacoes}`, 14, 44);
+            doc.text(`Enviados: ${enviados}`, 80, 44);
+            doc.text(`Pendentes: ${pendentes}`, 130, 44);
+            doc.text(`Agendados: ${agendados}`, 180, 44);
+            
+            // Preparar dados para a tabela
+            const tableColumns = [
+                { header: 'ID Sol.', dataKey: 'solicitacao' },
+                { header: 'ID Paciente', dataKey: 'identificacao_paciente' },
+                { header: 'Paciente', dataKey: 'paciente' },
+                { header: 'Procedimento', dataKey: 'procedimento' },
+                { header: 'Data/Hora', dataKey: 'data_hora' },
+                { header: 'Situação', dataKey: 'situacao' },
+                { header: 'Classificação', dataKey: 'classificacao_risco' },
+                { header: 'Profissional', dataKey: 'profissional_solicitante' },
+                { header: 'Status', dataKey: 'status' },
+                { header: 'Telefone', dataKey: 'celular_telefone' },
+                { header: 'Observação', dataKey: 'observacao' }
+            ];
+            
+            const tableRows = data.map(row => ({
+                solicitacao: row.solicitacao || row.id || '-',
+                identificacao_paciente: row.identificacao_paciente || '-',
+                paciente: row.paciente || '-',
+                procedimento: (row.procedimento || '-').length > 30 ? 
+                    (row.procedimento || '-').substring(0, 30) + '...' : 
+                    (row.procedimento || '-'),
+                data_hora: formatDateTimeForPDF(row.data_hora),
+                situacao: row.situacao || '-',
+                classificacao_risco: row.classificacao_risco || '-',
+                profissional_solicitante: (row.profissional_solicitante || '-').length > 25 ? 
+                    (row.profissional_solicitante || '-').substring(0, 25) + '...' : 
+                    (row.profissional_solicitante || '-'),
+                status: getStatusDisparoLabel(row.status),
+                celular_telefone: row.celular_telefone || '-',
+                observacao: (row.observacao || '-').length > 40 ? 
+                    (row.observacao || '-').substring(0, 40) + '...' : 
+                    (row.observacao || '-')
+            }));
+            
+            // Gerar tabela
+            doc.autoTable({
+                columns: tableColumns,
+                body: tableRows,
+                startY: 52,
+                margin: { top: 52, left: 14, right: 14 },
+                styles: {
+                    fontSize: 7,
+                    cellPadding: 2,
+                    overflow: 'linebreak',
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.1
+                },
+                headStyles: {
+                    fillColor: [108, 117, 125],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 8
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 249, 250]
+                },
+                columnStyles: {
+                    0: { cellWidth: 12 }, // ID Sol.
+                    1: { cellWidth: 18 }, // ID Paciente
+                    2: { cellWidth: 30 }, // Paciente
+                    3: { cellWidth: 35 }, // Procedimento
+                    4: { cellWidth: 22 }, // Data/Hora
+                    5: { cellWidth: 18 }, // Situação
+                    6: { cellWidth: 20 }, // Classificação
+                    7: { cellWidth: 30 }, // Profissional
+                    8: { cellWidth: 18 }, // Status
+                    9: { cellWidth: 22 }, // Telefone
+                    10: { cellWidth: 35 } // Observação
+                },
+                didDrawPage: function(data) {
+                    // Rodapé
+                    const pageCount = doc.internal.getNumberOfPages();
+                    const pageSize = doc.internal.pageSize;
+                    const pageHeight = pageSize.height || pageSize.getHeight();
+                    
+                    doc.setFontSize(8);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(
+                        `Página ${data.pageNumber} de ${pageCount}`,
+                        data.settings.margin.left,
+                        pageHeight - 10
+                    );
+                    
+                    doc.text(
+                        'Sistema de Gestão de Solicitações - Morrinhos',
+                        pageSize.width - 70,
+                        pageHeight - 10
+                    );
+                }
+            });
+            
+            // Salvar o PDF
+            const fileName = `relatorio_solicitacoes_${new Date().toISOString().slice(0, 10)}.pdf`;
+            doc.save(fileName);
+        }
+        
+        // Função auxiliar para formatar data no PDF
+        function formatDateTimeForPDF(dateStr) {
+            if (!dateStr || dateStr === '-' || dateStr === null || dateStr === undefined) return '-';
+            
+            try {
+                let date = null;
+                
+                // Formato brasileiro: dd/mm/yyyy ou dd/mm/yyyy hh:mm
+                const formatoBR = /(\d{1,2})\/(\d{1,2})\/(\d{4})/;
+                const matchBR = dateStr.match(formatoBR);
+                if (matchBR) {
+                    const [, dia, mes, ano] = matchBR;
+                    const horaMatch = dateStr.match(/(\d{1,2}):(\d{2})/);
+                    if (horaMatch) {
+                        const [, hora, minuto] = horaMatch;
+                        date = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia), parseInt(hora), parseInt(minuto));
+                    } else {
+                        date = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+                    }
+                } else {
+                    date = new Date(dateStr);
+                }
+                
+                if (date && !isNaN(date.getTime())) {
+                    return date.toLocaleDateString('pt-BR', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: '2-digit' 
+                    }) + ' ' + date.toLocaleTimeString('pt-BR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                } else {
+                    return dateStr && dateStr.toString().trim() !== '' ? dateStr : '-';
+                }
+            } catch (error) {
+                return dateStr && dateStr.toString().trim() !== '' ? dateStr : '-';
+            }
+        }
+
+        // Funções auxiliares
+        function formatDateTime(dateStr) {
+            if (!dateStr || dateStr === '-' || dateStr === null || dateStr === undefined) return '-';
+            
+            try {
+                // Debug: log do valor recebido
+                if (dateStr && dateStr !== '-') {
+                    console.log('Formatando data:', dateStr, typeof dateStr);
+                }
+                
+                // Tentar diferentes formatos de data
+                let date = null;
+                
+                // Formato brasileiro: dd/mm/yyyy ou dd/mm/yyyy hh:mm
+                const formatoBR = /(\d{1,2})\/(\d{1,2})\/(\d{4})/;
+                const matchBR = dateStr.match(formatoBR);
+                if (matchBR) {
+                    const [, dia, mes, ano] = matchBR;
+                    // Extrair hora se existir
+                    const horaMatch = dateStr.match(/(\d{1,2}):(\d{2})/);
+                    if (horaMatch) {
+                        const [, hora, minuto] = horaMatch;
+                        date = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia), parseInt(hora), parseInt(minuto));
+                    } else {
+                        date = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+                    }
+                } else {
+                    // Tentar parsing direto (formato ISO ou outros)
+                    date = new Date(dateStr);
+                }
+                
+                // Verificar se a data é válida
+                if (date && !isNaN(date.getTime())) {
+                    const formatted = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    console.log('Data formatada:', dateStr, '->', formatted);
+                    return formatted;
+                } else {
+                    // Se não conseguir parsear, retornar a string original ou '-'
+                    console.warn('Data inválida:', dateStr);
+                    return dateStr && dateStr.toString().trim() !== '' ? dateStr : '-';
+                }
+            } catch (error) {
+                console.warn('Erro ao formatar data:', dateStr, error);
+                return dateStr && dateStr.toString().trim() !== '' ? dateStr : '-';
+            }
+        }
+
+        function getStatusDisparoClass(status) {
+            switch (status) {
+                case 'pendente': return 'bg-secondary';
+                case 'em_fila': return 'bg-warning';
+                case 'enviado': return 'bg-primary';
+                case 'respondido': return 'bg-info';
+                case 'agendado': return 'bg-success';
+                case 'rejeitado': return 'bg-danger';
+                case 'sem_resposta': return 'bg-warning';
+                case 'cancelado': return 'bg-dark';
+                case 'erro': return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function getStatusDisparoLabel(status) {
+            switch (status) {
+                case 'pendente': return 'Pendente';
+                case 'em_fila': return 'Em Fila';
+                case 'enviado': return 'Enviado';
+                case 'respondido': return 'Respondido';
+                case 'agendado': return 'Agendado';
+                case 'rejeitado': return 'Rejeitado';
+                case 'sem_resposta': return 'Sem Resposta';
+                case 'cancelado': return 'Cancelado';
+                case 'erro': return 'Erro';
+                default: return 'Desconhecido';
+            }
+        }
+
+        function getClassificacaoRiscoClass(classificacao) {
+            if (!classificacao || classificacao === '-') return 'bg-secondary';
+            
+            const classificacaoUpper = classificacao.toUpperCase().trim();
+            
+            if (classificacaoUpper === 'EMERGÊNCIA' || classificacaoUpper === 'EMERGENCIA') {
+                return 'bg-danger';
+            }
+            if (classificacaoUpper === 'MUITO URGENTE') {
+                return 'bg-warning text-dark';
+            }
+            if (classificacaoUpper === 'URGENTE') {
+                return 'bg-warning';
+            }
+            if (classificacaoUpper === 'POUCO URGENTE') {
+                return 'bg-info';
+            }
+            if (classificacaoUpper === 'NAO URGENTE' || classificacaoUpper === 'NÃO URGENTE') {
+                return 'bg-success';
+            }
+            
+            return 'bg-secondary';
+        }
+
+        function showError(message) {
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-danger position-fixed';
+            toast.style.cssText = `
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.cssText = `
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<%- include('partials/header') %>
+<body>
+<%- include('partials/nav') %>
+    <!-- Main Content -->
+    <div class="container-fluid mt-3">
+        <!-- Header Section -->
+        <div class="text-center mb-4">
+            <div class="d-flex justify-content-center gap-3 align-items-center mb-3">
+                <img src="img/conecta.png" alt="Logo Conecta" style="height: 40px;">
+                <img src="img/morrinhos.png" alt="Logo Morrinhos" style="height: 40px;">
+            </div>
+        </div>
+
+        <!-- Page Header -->
+        <div class="row justify-content-center">
+            <div class="col-lg-11">
+                <div class="card main-card mb-4">
+                    <div class="card-header text-center">
+                        <h2 class="mb-1">
+                            <i class="bi bi-list-check me-2"></i>
+                            Gerenciar Disparos
+                        </h2>
+                        <p class="mb-0 opacity-75">Visualize e gerencie suas listas de disparo criadas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Queue Control Panel -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-11">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-task me-2"></i>
+                            Controle da Fila de Disparos
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light btn-sm" id="btnStartQueue">
+                                <i class="bi bi-play-fill me-1"></i>Iniciar Fila
+                            </button>
+                            <button class="btn btn-danger btn-sm" id="btnStopQueue">
+                                <i class="bi bi-stop-fill me-1"></i>Parar Fila
+                            </button>
+                            <button class="btn btn-warning btn-sm" onclick="refreshQueueStatus()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div id="queueInfo" class="border rounded p-3 bg-light">
+                                    <h6 class="text-success mb-3">Status da Fila</h6>
+                                    <p class="mb-2"><strong>Status:</strong> <span id="queueStatusText" class="badge bg-secondary">Carregando...</span></p>
+                                    <p class="mb-2"><strong>Intervalo:</strong> <span id="queueInterval">20-30 segundos</span></p>
+                                    <p class="mb-0"><strong>Máx. Tentativas:</strong> <span id="queueMaxRetries">3</span></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div id="queueStats" class="border rounded p-3 bg-light">
+                                    <h6 class="text-info mb-3">Estatísticas</h6>
+                                    <p class="mb-2"><strong>Na Fila:</strong> <span id="filaPendentes" class="badge bg-info">0</span></p>
+                                    <p class="mb-2"><strong>Enviadas:</strong> <span id="filaEnviadas" class="badge bg-success">0</span></p>
+                                    <p class="mb-0"><strong>Erro:</strong> <span id="filaErros" class="badge bg-danger">0</span></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div id="queueProgress" class="border rounded p-3 bg-light">
+                                    <h6 class="text-warning mb-3">Progresso</h6>
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between">
+                                            <small>Processamento</small>
+                                            <small id="progressPercent">0%</small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <p class="mb-0 small"><strong>Próximo Envio:</strong> <span id="nextSend">-</span></p>
+                                    <div class="text-center mt-3">
+                                        <a href="/configuracoes" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-gear-fill me-1"></i>Configurações Avançadas
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Stats -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-11">
+                <div class="card">
+                    <div class="card-body p-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control" id="searchDisparos" placeholder="Buscar por nome do disparo...">
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="statusFilter" id="filterAll" value="all" checked>
+                                    <label class="btn btn-outline-primary btn-sm" for="filterAll">Todos</label>
+                                    
+                                    <input type="radio" class="btn-check" name="statusFilter" id="filterCriado" value="criado">
+                                    <label class="btn btn-outline-secondary btn-sm" for="filterCriado">Criados</label>
+                                    
+                                    <input type="radio" class="btn-check" name="statusFilter" id="filterExecutando" value="executando">
+                                    <label class="btn btn-outline-warning btn-sm" for="filterExecutando">Executando</label>
+                                    
+                                    <input type="radio" class="btn-check" name="statusFilter" id="filterConcluido" value="concluido">
+                                    <label class="btn btn-outline-success btn-sm" for="filterConcluido">Concluídos</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="row justify-content-center" id="loadingState">
+            <div class="col-lg-11">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Carregando disparos...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disparos Grid -->
+        <div class="row justify-content-center d-none" id="disparosContainer">
+            <div class="col-lg-11">
+                <div class="row" id="disparosGrid">
+                    <!-- Disparos will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="row justify-content-center d-none" id="emptyState">
+            <div class="col-lg-6">
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h3 class="mt-3">Nenhum disparo encontrado</h3>
+                    <p class="text-muted">Ainda não há disparos criados no sistema.</p>
+                    <a href="/disparo" class="btn btn-custom">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Criar Primeiro Disparo
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div class="row justify-content-center d-none" id="errorState">
+            <div class="col-lg-6">
+                <div class="result-card result-error text-center">
+                    <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
+                    <h4>Erro ao carregar disparos</h4>
+                    <p id="errorMessage" class="mb-3">Ocorreu um erro ao buscar os disparos.</p>
+                    <button class="btn btn-custom" onclick="loadDisparos()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        Tentar Novamente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes do Disparo -->
+    <div class="modal fade modal-disparo-detalhes" id="modalDetalhesDisparo" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Detalhes do Disparo - <span id="modalDisparoNome"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Informações Gerais -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-calendar me-1"></i>Data de Criação</h6>
+                            <p id="modalDataCriacao" class="text-muted mb-3">-</p>
+                            
+                            <h6><i class="bi bi-file-text me-1"></i>Descrição</h6>
+                            <p id="modalDescricao" class="text-muted mb-3">-</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-flag me-1"></i>Status</h6>
+                            <p id="modalStatus" class="mb-3">-</p>
+                            
+                            <h6><i class="bi bi-graph-up me-1"></i>Progresso</h6>
+                            <div class="progress mb-2" style="height: 8px;">
+                                <div id="modalProgressBar" class="progress-bar" style="width: 0%"></div>
+                            </div>
+                            <small id="modalProgressText" class="text-muted">0 de 0 processados</small>
+                        </div>
+                    </div>
+
+                    <!-- Configuração da Mensagem -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-chat-square-text me-2"></i>
+                                        Mensagem
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <textarea id="modalMensagemPersonalizada" class="form-control" rows="4" 
+                                                placeholder="Digite aqui a mensagem que será enviada..."></textarea>
+                                            <small class="text-muted mt-2">
+                                                Você pode usar as seguintes variáveis que serão substituídas pelos dados de cada registro:
+                                                <ul class="mt-2" id="listaVariaveisDinamicas"></ul>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Devedores -->
+                    <h6><i class="bi bi-people me-1"></i>Devedores Incluídos</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-devedores">
+                            <thead class="table-light" id="dinamicThead"></thead>
+                            <tbody id="modalListaDevedores">
+                                <!-- Devedores serão carregados aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <div>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-danger" id="btnDeletarDisparo">
+                                <i class="bi bi-trash me-2"></i>
+                                Deletar
+                            </button>
+                            <button type="button" class="btn btn-warning" id="btnPausarDisparo">
+                                <i class="bi bi-pause-circle me-2"></i>
+                                Pausar
+                            </button>
+                            <button type="button" class="btn btn-success" id="btnExecutarDisparo">
+                                <i class="bi bi-play-circle me-2"></i>
+                                Executar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JavaScript Customizado -->
+    <script>
+        // Tipos de mensagem e colunas obrigatórias (escopo global)
+        const obrigatoriedadePorTipo = {
+            '1_notificacao': ['nome', 'telefone', 'debito','tipo'],
+            '2_notificacao': ['nome', 'telefone','prazo'],
+            '3_notificacao': ['nome', 'telefone', 'duam'],
+            '4_notificacao': ['nome', 'telefone','duam'],
+            '5_notificacao': ['nome', 'telefone']
+        };
+
+        // Estado da aplicação
+        let allDisparos = [];
+        let filteredDisparos = [];
+        let currentDisparo = null;
+
+        // Elementos DOM
+        const loadingState = document.getElementById('loadingState');
+        const disparosContainer = document.getElementById('disparosContainer');
+        const disparosGrid = document.getElementById('disparosGrid');
+        const emptyState = document.getElementById('emptyState');
+        const errorState = document.getElementById('errorState');
+        const errorMessage = document.getElementById('errorMessage');
+        const searchDisparos = document.getElementById('searchDisparos');
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDisparos();
+            setupEventListeners();
+            loadQueueStatus(); // Carregar status da fila
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Busca
+            searchDisparos.addEventListener('input', debounce(filterDisparos, 300));
+            
+            // Filtros de status
+            document.querySelectorAll('input[name="statusFilter"]').forEach(input => {
+                input.addEventListener('change', filterDisparos);
+            });
+            
+            // Observers do modal (mensagem personalizada)
+            // Nota: o select de tipo de mensagem foi removido no novo fluxo.
+            // Mantemos a função de descrição disponível, caso seja usada em outro lugar.
+            
+            // Event listeners para botões da fila
+            const btnStartQueue = document.getElementById('btnStartQueue');
+            const btnStopQueue = document.getElementById('btnStopQueue');
+            
+            if (btnStartQueue) {
+                btnStartQueue.addEventListener('click', startQueue);
+            }
+            
+            if (btnStopQueue) {
+                btnStopQueue.addEventListener('click', stopQueue);
+            }
+        }
+
+        // Carregar disparos da API
+        async function loadDisparos() {
+            showState('loading');
+            
+            try {
+                const response = await fetch('/api/disparos');
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    allDisparos = data.data;
+                    filteredDisparos = [...allDisparos];
+                    
+                    if (allDisparos.length === 0) {
+                        showState('empty');
+                    } else {
+                        renderDisparos();
+                        showState('disparos');
+                    }
+                } else {
+                    throw new Error(data.message || 'Erro desconhecido');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar disparos:', error);
+                errorMessage.textContent = error.message;
+                showState('error');
+            }
+        }
+
+        // Mostrar diferentes estados da interface
+        function showState(state) {
+            loadingState.classList.add('d-none');
+            disparosContainer.classList.add('d-none');
+            emptyState.classList.add('d-none');
+            errorState.classList.add('d-none');
+            
+            switch (state) {
+                case 'loading':
+                    loadingState.classList.remove('d-none');
+                    break;
+                case 'disparos':
+                    disparosContainer.classList.remove('d-none');
+                    break;
+                case 'empty':
+                    emptyState.classList.remove('d-none');
+                    break;
+                case 'error':
+                    errorState.classList.remove('d-none');
+                    break;
+            }
+        }
+
+        // Renderizar disparos na grade
+        function renderDisparos() {
+            disparosGrid.innerHTML = '';
+            
+            if (filteredDisparos.length === 0) {
+                disparosGrid.innerHTML = `
+                    <div class="col-12">
+                        <div class="text-center py-4">
+                            <i class="bi bi-search display-4 text-muted"></i>
+                            <h5 class="mt-3">Nenhum resultado encontrado</h5>
+                            <p class="text-muted">Tente ajustar os filtros de busca.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredDisparos.forEach(disparo => {
+                const disparoCard = createDisparoCard(disparo);
+                disparosGrid.appendChild(disparoCard);
+            });
+        }
+
+        // Criar card para um disparo
+        function createDisparoCard(disparo) {
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4 mb-4';
+            
+            const statusClass = getStatusClass(disparo.status);
+            const statusIcon = getStatusIcon(disparo.status);
+            const statusText = getStatusText(disparo.status);
+            const dataCriacao = new Date(disparo.data_disparo).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Calcular progresso
+            const totalSolicitacoes = disparo.total_solicitacoes_vinculadas || 0;
+            const processadas = disparo.resultado?.total_processadas || 0;
+            const falhas = disparo.resultado?.erros || 0;
+            const sucesso = disparo.resultado?.sucessos || 0;
+            const progresso = totalSolicitacoes > 0 ? Math.round((processadas / totalSolicitacoes) * 100) : 0;
+            
+            console.log('Renderizando disparo:', disparo);
+
+            col.innerHTML = `
+                <div class="card disparo-card h-100">
+                    <div class="card-header bg-white border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="mb-0 text-truncate" title="${disparo.nome}">${disparo.nome}</h6>
+                            <span class="badge ${statusClass} status-badge ms-2">
+                                <i class="${statusIcon} me-1"></i>
+                                ${statusText}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="disparo-info mb-3">
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Criado em</small>
+                                    <small class="fw-bold">${dataCriacao}</small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Lista Origem</small>
+                                    <small class="fw-bold">${disparo.source_nome}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Total</small>
+                                    <span class="badge bg-primary">${totalSolicitacoes}</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Processados</small>
+                                    <span class="badge bg-warning">${processadas}</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Falhas</small>
+                                    <span class="badge bg-danger">${falhas}</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Sucesso</small>
+                                    <span class="badge bg-success">${sucesso}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted">Progresso</small>
+                                <small class="fw-bold">${progresso}%</small>
+                            </div>
+                            <div class="progress progress-mini">
+                                <div class="progress-bar ${getProgressBarClass(progresso)}" 
+                                     style="width: ${progresso}%"></div>
+                            </div>
+                        </div>
+                        
+                        ${disparo.descricao ? `
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Descrição</small>
+                                <small class="text-truncate d-block" title="${disparo.descricao}">${disparo.descricao}</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="card-footer bg-white border-top-0">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary btn-action flex-fill" onclick="verDetalhes(${disparo.id})">
+                                <i class="bi bi-eye me-1"></i>
+                                Detalhes
+                            </button>
+                            <button class="btn btn-success btn-action" onclick="executarDisparo(${disparo.id})"
+                                    ${disparo.status === 'executando' || disparo.status === 'concluido' ? 'disabled' : ''}>
+                                <i class="bi bi-play-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return col;
+        }
+
+        // Filtrar disparos
+        function filterDisparos() {
+            const searchTerm = searchDisparos.value.toLowerCase();
+            const statusFilter = document.querySelector('input[name="statusFilter"]:checked').value;
+            
+            filteredDisparos = allDisparos.filter(disparo => {
+                const matchesSearch = disparo.nome.toLowerCase().includes(searchTerm) ||
+                                    disparo.source_nome.toLowerCase().includes(searchTerm);
+                const matchesStatus = statusFilter === 'all' || disparo.status === statusFilter;
+                
+                return matchesSearch && matchesStatus;
+            });
+            
+            renderDisparos();
+        }
+
+        // Ver detalhes do disparo
+        async function verDetalhes(disparoId) {
+            try {
+                const response = await fetch(`/api/disparos/${disparoId}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    console.log('Dados do disparo recebidos:', data.data);
+                    currentDisparo = data.data;
+                    populateModalDetalhes(currentDisparo);
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('modalDetalhesDisparo'));
+                    modal.show();
+                } else {
+                    throw new Error(data.message || 'Erro ao carregar detalhes');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar detalhes:', error);
+                mostrarToast('Erro ao carregar detalhes do disparo: ' + error.message, 'danger');
+            }
+        }
+
+        // Popular modal com detalhes
+    function populateModalDetalhes(disparo) {
+            try {
+                // Elementos básicos
+                document.getElementById('modalDisparoNome').textContent = disparo.nome;
+                document.getElementById('modalDataCriacao').textContent = formatarDataHora(disparo.data_disparo);
+                document.getElementById('modalDescricao').textContent = disparo.descricao || 'Sem descrição';
+                
+                // Status
+                const statusBadge = `<span class="badge ${getStatusClass(disparo.status)}">${getStatusText(disparo.status)}</span>`;
+                document.getElementById('modalStatus').innerHTML = statusBadge;
+                
+                // Mensagem personalizada
+                const mensagemTextarea = document.getElementById('modalMensagemPersonalizada');
+                if (mensagemTextarea) {
+                    mensagemTextarea.value = disparo.mensagem_personalizada || disparo.configuracao?.mensagem_personalizada || '';
+                    // Desabilitar se o disparo já estiver em andamento ou concluído
+                    mensagemTextarea.disabled = ['executing', 'done'].includes(disparo.status);
+                }
+
+                // Lista dinâmica de variáveis
+                const varsList = document.getElementById('listaVariaveisDinamicas');
+                varsList.innerHTML = '';
+                let dataKeys = [];
+                if (disparo.solicitacoes && disparo.solicitacoes.length > 0) {
+                    const primeiroData = disparo.solicitacoes[0]?.data || {};
+                    dataKeys = Object.keys(primeiroData);
+                }
+                if(dataKeys.length === 0) {
+                    varsList.innerHTML = '<li class="text-muted">Nenhuma variável dinâmica disponível.</li>';
+                } else {
+                    dataKeys.forEach(key => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<code>{${key}}</code> - Valor da coluna <b>${key}</b>`;
+                        varsList.appendChild(li);
+                    });
+                }
+                
+                // Progresso
+                const total = disparo.total_solicitacoes || 0;
+                const processadas = disparo.solicitacoes_enviadas || 0;
+                const progresso = total > 0 ? Math.round((processadas / total) * 100) : 0;
+                
+                const progressBar = document.getElementById('modalProgressBar');
+                progressBar.style.width = `${progresso}%`;
+                progressBar.className = `progress-bar ${getProgressBarClass(progresso)}`;
+                document.getElementById('modalProgressText').textContent = `${processadas} de ${total} processados`;
+            } catch (error) {
+                console.error('Erro ao popular detalhes do modal:', error);
+                mostrarToast('Erro ao carregar detalhes do disparo: ' + error.message, 'error');
+            }
+            // Status
+            const statusBadge = `<span class="badge ${getStatusClass(disparo.status)}">${getStatusText(disparo.status)}</span>`;
+            document.getElementById('modalStatus').innerHTML = statusBadge;
+
+            // Mensagem personalizada (carregar valor salvo ou deixar em branco)
+            const mensagemInput = document.getElementById('modalMensagemPersonalizada');
+            if (mensagemInput) {
+                mensagemInput.value = (disparo.configuracao && disparo.configuracao.mensagem_personalizada) || '';
+                // Desabilitar textarea se disparo foi executado/concluído
+                mensagemInput.disabled = (disparo.status === 'executing' || disparo.status === 'done');
+            }
+            
+            // Progresso
+            const total = disparo.total_solicitacoes || 0;
+            const processadas = disparo.solicitacoes_enviadas || 0;
+            const progresso = total > 0 ? Math.round((processadas / total) * 100) : 0;
+            
+            const progressBar = document.getElementById('modalProgressBar');
+            progressBar.style.width = `${progresso}%`;
+            progressBar.className = `progress-bar ${getProgressBarClass(progresso)}`;
+            
+            document.getElementById('modalProgressText').textContent = `${processadas} de ${total} processados`;
+            
+            // Lista de devedores DINÂMICAS
+            const tbody = document.getElementById('modalListaDevedores');
+            const thead = document.getElementById('dinamicThead');
+            tbody.innerHTML = '';
+            thead.innerHTML = '';
+
+            if (disparo.solicitacoes && disparo.solicitacoes.length > 0) {
+                const primeiroData = disparo.solicitacoes[0].data || {};
+                const keys = Object.keys(primeiroData);
+
+                // Monta o cabeçalho dinâmico
+                let ths = '<tr>';
+                ths += '<th>ID Sol.</th>';
+                keys.forEach(key => {
+                    ths += `<th>${key[0].toUpperCase() + key.slice(1)}</th>`;
+                });
+                ths += '<th>Status</th>';
+                ths += '</tr>';
+                thead.innerHTML = ths;
+
+                // Monta cada linha de devedor
+                disparo.solicitacoes.forEach(sol => {
+                    const data = sol.data || {};
+                    let tds = `<td><small class="text-muted">${sol.solicitacao_id || '-'}</small></td>`;
+                    keys.forEach(key => {
+                        tds += `<td>${data[key] !== undefined ? data[key] : ''}</td>`;
+                    });
+                    tds += `<td><span class="badge ${getStatusSolicitacaoClass(sol.status)}">${getStatusSolicitacaoText(sol.status)}</span></td>`;
+                    const row = document.createElement('tr');
+                    row.innerHTML = tds;
+                    tbody.appendChild(row);
+                });
+            } else {
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="99" class="text-center text-muted">Nenhum devedor encontrado</td></tr>';
+            }
+            
+            // Configurar botões
+            const btnExecutar = document.getElementById('btnExecutarDisparo');
+            const btnPausar = document.getElementById('btnPausarDisparo');
+            const btnDeletar = document.getElementById('btnDeletarDisparo');
+            
+            // Lógica de habilitação/desabilitação dos botões baseada no status
+            const isExecutando = disparo.status === 'executing';
+            const isConcluido = disparo.status === 'done';
+            const isPausado = disparo.status === 'paused';
+            
+            btnExecutar.disabled = isExecutando || isConcluido;
+            // O botão de pausar só fica ativo quando está executando
+            btnPausar.disabled = !isExecutando;
+            
+            // Sempre mostrar como 'Pausar' (sem alternar para Retomar)
+            btnPausar.innerHTML = '<i class="bi bi-pause-circle me-2"></i>Pausar';
+            btnPausar.className = 'btn btn-warning';
+            
+            // Event listeners
+            btnExecutar.onclick = () => executarDisparo(disparo.id);
+            btnPausar.onclick = () => pausarDisparo(disparo.id, disparo.status);
+            btnDeletar.onclick = () => deletarDisparo(disparo.id, disparo.nome);
+        }
+
+        // Executar disparo
+        async function executarDisparo(disparoId) {
+            const mensagemPersonalizada = document.getElementById('modalMensagemPersonalizada').value;
+            if (!mensagemPersonalizada) {
+                mostrarToast('Por favor, digite a mensagem antes de executar o disparo.', 'warning');
+                document.getElementById('modalMensagemPersonalizada').focus();
+                return;
+            }
+            
+            // Verificar se há variáveis na mensagem
+            const variaveis = mensagemPersonalizada.match(/\{([^}]+)\}/g);
+            
+            // Verificar se as variáveis existem nos dados
+            if (variaveis && variaveis.length > 0) {
+                let colunasDisponiveis = [];
+                if (currentDisparo && Array.isArray(currentDisparo.solicitacoes) && currentDisparo.solicitacoes.length > 0) {
+                    const primeiro = currentDisparo.solicitacoes[0];
+                    if (primeiro.data && typeof primeiro.data === 'object') {
+                        colunasDisponiveis = Object.keys(primeiro.data);
+                    }
+                }
+                
+                // Remover as chaves das variáveis para comparação
+                const variaveisRequeridas = variaveis.map(v => v.replace(/[{}]/g, ''));
+                
+                const variaveisFaltando = variaveisRequeridas.filter(v => !colunasDisponiveis.includes(v));
+                if (variaveisFaltando.length > 0) {
+                    mostrarToast(
+                        'Erro: As seguintes variáveis não existem nos dados: ' + variaveisFaltando.join(', '),
+                        'danger'
+                    );
+                    return;
+                }
+            }
+
+            if (!confirm('Tem certeza que deseja executar este disparo? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            try {
+                mostrarToast('Iniciando execução do disparo...', 'info');
+
+                const response = await fetch(`/api/disparos/${disparoId}/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        mensagem_personalizada: mensagemPersonalizada
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const estimativa = data.data.estimativa_conclusao;
+                    let message = `Disparo adicionado à fila com sucesso! ${data.data.total_solicitacoes} mensagens serão enviadas.`;
+                    if (estimativa) {
+                        message += ` Estimativa de conclusão: ${estimativa.estimated_minutes} minutos.`;
+                    }
+                    mostrarToast(message, 'success');
+                    loadQueueStatus();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalDetalhesDisparo'));
+                    if (modal) { modal.hide(); }
+                    setTimeout(() => { loadDisparos(); }, 1000);
+                } else {
+                    throw new Error(data.message || 'Erro ao executar disparo');
+                }
+            } catch (error) {
+                console.error('Erro ao executar disparo:', error);
+                mostrarToast('Erro ao executar disparo: ' + error.message, 'danger');
+            }
+        }
+
+        // Pausar/Retomar disparo
+        async function pausarDisparo(disparoId, statusAtual) {
+            try {
+                const isPausado = statusAtual === 'paused';
+                const acao = isPausado ? 'retomar' : 'pausar';
+                const statusNovo = isPausado ? 'executing' : 'paused';
+                
+                if (!confirm(`Tem certeza que deseja ${acao} este disparo?`)) {
+                    return;
+                }
+                
+                mostrarToast(`${isPausado ? 'Retomando' : 'Pausando'} disparo...`, 'info');
+                
+                const response = await fetch(`/api/disparos/${disparoId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: statusNovo })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarToast(`Disparo ${isPausado ? 'retomado' : 'pausado'} com sucesso!`, 'success');
+                    
+                    // Fechar modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalDetalhesDisparo'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    
+                    // Recarregar lista
+                    setTimeout(() => {
+                        loadDisparos();
+                        loadQueueStatus();
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || `Erro ao ${acao} disparo`);
+                }
+            } catch (error) {
+                console.error(`Erro ao ${statusAtual === 'pausado' ? 'retomar' : 'pausar'} disparo:`, error);
+                mostrarToast(`Erro ao ${statusAtual === 'pausado' ? 'retomar' : 'pausar'} disparo: ` + error.message, 'danger');
+            }
+        }
+
+        // Deletar disparo
+        async function deletarDisparo(disparoId, nomeDisparo) {
+            try {
+                if (!confirm(`Tem certeza que deseja DELETAR o disparo "${nomeDisparo}"?\n\nEsta ação não pode ser desfeita e todos os dados serão perdidos permanentemente.`)) {
+                    return;
+                }
+                
+                // Confirmação adicional para segurança
+                const confirmacao = prompt(`Para confirmar a exclusão, digite: ${nomeDisparo}`);
+                if (confirmacao !== nomeDisparo) {
+                    mostrarToast('Confirmação não confere. Exclusão cancelada.', 'warning');
+                    return;
+                }
+                
+                mostrarToast('Deletando disparo...', 'info');
+                
+                const response = await fetch(`/api/disparos/${disparoId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarToast('Disparo deletado com sucesso!', 'success');
+                    
+                    // Fechar modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalDetalhesDisparo'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    
+                    // Recarregar lista
+                    setTimeout(() => {
+                        loadDisparos();
+                        loadQueueStatus();
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || 'Erro ao deletar disparo');
+                }
+            } catch (error) {
+                console.error('Erro ao deletar disparo:', error);
+                mostrarToast('Erro ao deletar disparo: ' + error.message, 'danger');
+            }
+        }
+
+        // Atualizar descrição do tipo de mensagem
+        function atualizarDescricaoTipoMensagem(tipo) {
+            const descricaoDiv = document.getElementById('modalDescricaoTipo');
+            
+            switch (tipo) {
+    case '1_notificacao': // Contribuintes que ainda não foram notificados
+        descricaoDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <i class="bi bi-info-circle-fill text-info me-2 mt-1"></i>
+                <span class="text-info">
+                    <strong>Mensagem para Contribuintes Não Notificados:</strong><br>
+                    Você possui débitos junto à Fazenda Pública do município de Morrinhos - Goiás 
+                    no valor de <strong>R$xx,xx</strong> referente a <em>(imposto ou taxa)</em>.<br>
+                    Digite <strong>1</strong> para pagar, <strong>2</strong> para parcelamento 
+                    ou <strong>3</strong> para maiores informações.
+                </span>
+            </div>
+        `;
+        descricaoDiv.className = 'alert alert-info mb-0';
+        break;
+
+    case '2_notificacao': // Contribuintes que já foram notificados
+        descricaoDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <i class="bi bi-envelope-exclamation-fill text-warning me-2 mt-1"></i>
+                <span class="text-warning">
+                    <strong>Mensagem para Contribuintes Já Notificados:</strong><br>
+                    Você recebeu uma notificação de cobrança do município de Morrinhos através dos 
+                    Correios, e o prazo para negociação vence em: <strong>xx/xx/xxxx</strong>.<br>
+                    Procure o departamento de arrecadação o quanto antes e evite transtornos.
+                </span>
+            </div>
+        `;
+        descricaoDiv.className = 'alert alert-warning mb-0';
+        break;
+
+    case '3_notificacao': // Contribuintes que já parcelaram e estão em atraso
+        descricaoDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <i class="bi bi-exclamation-triangle-fill text-danger me-2 mt-1"></i>
+                <span class="text-danger">
+                    <strong>Mensagem para Parcelamento em Atraso:</strong><br>
+                    Você possui débitos parcelados junto à Fazenda Pública de Morrinhos - Goiás.<br>
+                    <strong>DUAM REPAC nº xxxxx</strong>.<br>
+                    A parcela <strong>xx</strong> está em atraso há mais de 30 dias.<br>
+                    Procure o departamento de arrecadação e evite transtornos.<br>
+                    Após 60 dias de vencimento, você perderá o benefício do parcelamento.
+                </span>
+            </div>
+        `;
+        descricaoDiv.className = 'alert alert-danger mb-0';
+        break;
+
+    case '4_notificacao': // Contribuintes com mais de uma parcela vencida ou com 60 dias de vencimento
+        descricaoDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <i class="bi bi-x-octagon-fill text-dark me-2 mt-1"></i>
+                <span class="text-dark">
+                    <strong>Mensagem para Perda do Benefício de Parcelamento:</strong><br>
+                    Após ser notificado, sem resolução do mérito, seus débitos foram inscritos em dívida ativa e encaminhados para negativação.
+                    Procure o departamento de arrecadação imediatamente.
+                    Estamos à disposição para ajudar no que for preciso.
+                </span>
+            </div>
+        `;
+        break;
+        descricaoDiv.className = 'alert alert-dark mb-0';
+    case '5_notificacao': // Contribuintes com mais de uma parcela vencida ou com 60 dias de vencimento
+        descricaoDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <i class="bi bi-exclamation-triangle-fill text-danger me-2 mt-1"></i>
+                <span class="text-dark">
+                    <strong>Mensagem para Perda do Benefício de Parcelamento:</strong><br>
+                    Você perdeu o prazo para negociação de seus débitos Notificação n. xxxxxxx. seus débitos foram encaminhados para a divida ativa. Procure a Fazenda pública Municipal e evite transtornos.
+                </span>
+            </div>
+        `;
+        descricaoDiv.className = 'alert alert-dark mb-0';
+        break;
+}
+
+        }
+
+        // Salvar tipo de mensagem
+        async function salvarTipoMensagem(disparoId, tipoMensagem) {
+            try {
+                const response = await fetch(`/api/disparos/${disparoId}/tipo-mensagem`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tipo_mensagem: tipoMensagem })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status !== 'success') {
+                    throw new Error(data.message || 'Erro ao salvar tipo de mensagem');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar tipo de mensagem:', error);
+                throw error;
+            }
+        }
+
+        // Funções utilitárias
+        function getStatusClass(status) {
+            switch (status) {
+                case 'executing': return 'bg-warning';
+                case 'pending': return 'bg-warning text-dark';
+                case 'paused': return 'bg-info';
+                case 'done': return 'bg-success';
+                case 'cancelled': return 'bg-dark';
+                case 'error': return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function getStatusIcon(status) {
+            switch (status) {
+                case 'executing': return 'bi bi-gear-fill';
+                case 'pending': return 'bi bi-clock-fill';
+                case 'paused': return 'bi bi-pause-circle-fill';
+                case 'done': return 'bi bi-check-circle-fill';
+                case 'cancelled': return 'bi bi-x-circle-fill';
+                case 'error': return 'bi bi-exclamation-triangle-fill';
+                default: return 'bi bi-question-circle';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'executing': return 'Executando';
+                case 'pending': return 'Pendente';
+                case 'paused': return 'Pausado';
+                case 'done': return 'Concluído';
+                case 'cancelled': return 'Cancelado';
+                case 'error': return 'Erro';
+                default: return 'Desconhecido';
+            }
+        }
+
+        function getProgressBarClass(percentage) {
+            if (percentage === 100) return 'bg-success';
+            if (percentage >= 75) return 'bg-info';
+            if (percentage >= 25) return 'bg-warning';
+            return 'bg-secondary';
+        }
+
+        function getStatusSolicitacaoClass(status) {
+            switch (status) {
+                case 'pending': return 'bg-secondary';
+                case 'executing': return 'bg-warning';
+                case 'delivered': return 'bg-primary';
+                case 'error': return 'bg-danger';
+                case 'cancelled': return 'bg-dark';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function getStatusSolicitacaoText(status) {
+            switch (status) {
+                case 'pending': return 'Pendente';
+                case 'executing': return 'Executando';
+                case 'delivered': return 'Enviado';
+                case 'error': return 'Erro';
+                case 'cancelled': return 'Cancelado';
+                default: return 'Desconhecido';
+            }
+        }
+
+        // Formatar data e hora para exibição
+        function formatarDataHora(dataISO) {
+            const date = new Date(dataISO);
+            // Formato: DD/MM/AAAA - HH:MM
+            const dia = date.getDate().toString().padStart(2, '0');
+            const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+            const ano = date.getFullYear();
+            const hora = date.getHours().toString().padStart(2, '0');
+            const minuto = date.getMinutes().toString().padStart(2, '0');
+            
+            return `${dia}/${mes}/${ano} - ${hora}:${minuto}`;
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Mostrar toast de notificação
+        function mostrarToast(mensagem, tipo = 'info') {
+            // Remover toast anterior se existir
+            const existingToast = document.getElementById('customToast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            // Criar toast
+            const toast = document.createElement('div');
+            toast.id = 'customToast';
+            toast.className = `alert alert-${tipo} position-fixed`;
+            toast.style.cssText = `
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideInRight 0.3s ease-out;
+            `;
+            
+            const iconClass = tipo === 'success' ? 'bi-check-circle-fill' : 
+                             tipo === 'danger' ? 'bi-exclamation-triangle-fill' : 
+                             'bi-info-circle-fill';
+                             
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi ${iconClass} me-2"></i>
+                    <span>${mensagem}</span>
+                    <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto-remover após 5 segundos
+            setTimeout(() => {
+                if (toast && toast.parentNode) {
+                    toast.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        // ========== FUNÇÕES DE CONTROLE DA FILA ==========
+        
+        // Função de compatibilidade - redireciona para a nova implementação
+        async function loadQueueStatus() {
+            try {
+                const response = await fetch('/api/disparos/queue/status');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Usando a nova função
+                    updateQueueStatusUI(data.data);
+                } else {
+                    console.error('Erro ao carregar status da fila:', data.message);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar status da fila:', error);
+            }
+        }
+
+        // Iniciar fila
+        async function startQueue() {
+            try {
+                const response = await fetch('/api/disparos/queue/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarToast('Fila de disparos iniciada com sucesso!', 'success');
+                    loadQueueStatus();
+                } else {
+                    mostrarToast('Erro ao iniciar fila: ' + data.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Erro ao iniciar fila:', error);
+                mostrarToast('Erro ao iniciar fila: ' + error.message, 'danger');
+            }
+        }
+
+        // Parar fila
+        async function stopQueue() {
+            try {
+                const response = await fetch('/api/disparos/queue/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarToast('Fila de disparos parada com sucesso!', 'success');
+                    loadQueueStatus();
+                } else {
+                    mostrarToast('Erro ao parar fila: ' + data.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Erro ao parar fila:', error);
+                mostrarToast('Erro ao parar fila: ' + error.message, 'danger');
+            }
+        }
+
+        // ========== FUNÇÕES DE CONFIGURAÇÃO DA FILA ==========
+
+        // Carregar configurações do Typebot
+        async function loadTypebotConfig() {
+            try {
+                addTestLog('📥 Carregando configurações do Webhook...', 'info');
+                
+                const response = await fetch('/api/typebot/config');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const config = data.data;
+                    document.getElementById('typebotUrl').value = config.url || '';
+                    document.getElementById('typebotApiKey').value = config.apiKey || '';
+                    document.getElementById('httpMethod').value = config.httpMethod || 'POST';
+                    document.getElementById('customHeaders').value = config.customHeaders ? JSON.stringify(config.customHeaders, null, 2) : '';
+                    document.getElementById('payloadTemplate').value = config.payloadTemplate || getDefaultPayloadTemplate();
+                    
+                    // Validar template carregado
+                    validatePayloadTemplate();
+                    
+                    addTestLog('✅ Configurações carregadas com sucesso', 'success');
+                    updateApiStatus('online', 'Configurações carregadas');
+                } else {
+                    throw new Error(data.message || 'Erro ao carregar configurações');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar configurações:', error);
+                addTestLog('❌ Erro ao carregar configurações: ' + error.message, 'error');
+                updateApiStatus('offline', 'Erro ao carregar');
+                
+                // Carregar configurações padrão em caso de erro
+                loadDefaultConfig();
+            }
+        }
+
+        // Carregar configurações padrão
+        function loadDefaultConfig() {
+            document.getElementById('typebotUrl').value = 'https://evo.apollocompany.com.br/typebot/start/4363_apollo';
+            document.getElementById('typebotApiKey').value = '8DAE19CC1DC5-430B-A005-5E4CDFEBB17E';
+            document.getElementById('httpMethod').value = 'POST';
+            document.getElementById('customHeaders').value = '';
+            document.getElementById('payloadTemplate').value = getDefaultPayloadTemplate();
+            
+            // Validar template padrão
+            validatePayloadTemplate();
+        }
+
+        // Obter template padrão do payload
+        function getDefaultPayloadTemplate() {
+            return JSON.stringify({
+                phone: "{phone}",
+                name: "{name}",
+                ccp: "{ccp}",
+                processo: "{processo}",
+                valor_devido: "{valor_devido}",
+                test: false
+            }, null, 2);
+        }
+
+        // Carregar template padrão do payload
+        function loadDefaultPayloadTemplate() {
+            const payloadTemplate = document.getElementById('payloadTemplate');
+            payloadTemplate.value = getDefaultPayloadTemplate();
+            
+            // Validar o template carregado
+            validatePayloadTemplate();
+            
+            addTestLog('📄 Template padrão carregado', 'info');
+            mostrarToast('Template padrão carregado!', 'info');
+        }
+
+        // Salvar configurações do Typebot
+        async function saveTypebotConfig() {
+            const url = document.getElementById('typebotUrl').value.trim();
+            const apiKey = document.getElementById('typebotApiKey').value.trim();
+            const httpMethod = document.getElementById('httpMethod').value;
+            const customHeaders = document.getElementById('customHeaders').value.trim();
+            const payloadTemplate = document.getElementById('payloadTemplate').value.trim();
+            
+            if (!url || !apiKey) {
+                mostrarToast('Por favor, preencha a URL e a API Key', 'warning');
+                return;
+            }
+            
+            // Validar headers customizados se preenchidos
+            let parsedHeaders = {};
+            if (customHeaders) {
+                try {
+                    parsedHeaders = JSON.parse(customHeaders);
+                } catch (error) {
+                    mostrarToast('Headers personalizados devem estar em formato JSON válido', 'danger');
+                    return;
+                }
+            }
+            
+            // Validar template do payload se preenchido
+            if (payloadTemplate) {
+                try {
+                    // Criar um template de teste substituindo as variáveis por valores apropriados
+                    let testTemplate = payloadTemplate;
+                    
+                    // Primeiro, tentar fazer parse direto para ver se já é um JSON válido
+                    // Não há referências de procedimento mais para remover nas validações
+                    try {
+                        JSON.parse(testTemplate);
+                    } catch {
+                        // Não é JSON válido ainda, pode ter variáveis - vamos processar
+                        const replacements = [
+                            { pattern: /"\{phone\}"/g, value: '"123456789"' },
+                            { pattern: /\{phone\}/g, value: '"123456789"' },
+                            { pattern: /"\{name\}"/g, value: '"Test Name"' },
+                            { pattern: /\{name\}/g, value: '"Test Name"' },
+                            { pattern: /"\{ccp\}"/g, value: '"123456789"' },
+                            { pattern: /\{ccp\}/g, value: '"123456789"' },
+                            { pattern: /"\{processo\}"/g, value: '"2024/001"' },
+                            { pattern: /\{processo\}/g, value: '"2024/001"' },
+                            { pattern: /"\{valor_devido\}"/g, value: '"R$ 1.500,00"' },
+                            { pattern: /\{valor_devido\}/g, value: '"R$ 1.500,00"' },
+                            { pattern: /"\{test\}"/g, value: 'false' },
+                            { pattern: /\{test\}/g, value: 'false' }
+                        ];
+
+                        replacements.forEach(({ pattern, value }) => {
+                            testTemplate = testTemplate.replace(pattern, value);
+                        });
+                        
+                        // Tentar fazer parse do JSON processado
+                        JSON.parse(testTemplate);
+                    }
+                } catch (error) {
+                    mostrarToast('Template do payload deve estar em formato JSON válido: ' + error.message, 'danger');
+                    return;
+                }
+            }
+            
+            try {
+                addTestLog('💾 Salvando configurações do Webhook...', 'info');
+                
+                const response = await fetch('/api/typebot/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        apiKey: apiKey,
+                        httpMethod: httpMethod,
+                        customHeaders: parsedHeaders,
+                        payloadTemplate: payloadTemplate
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    addTestLog('✅ Configurações salvas com sucesso', 'success');
+                    mostrarToast('Configurações do Webhook salvas com sucesso!', 'success');
+                    updateApiStatus('online', 'Configurações salvas');
+                    
+                    // Testar conectividade automaticamente após salvar
+                    setTimeout(() => {
+                        testTypebotConnection();
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || 'Erro ao salvar configurações');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar configurações:', error);
+                addTestLog('❌ Erro ao salvar configurações: ' + error.message, 'error');
+                mostrarToast('Erro ao salvar configurações: ' + error.message, 'danger');
+                updateApiStatus('offline', 'Erro ao salvar');
+            }
+        }
+
+        // Restaurar configurações padrão
+        function resetTypebotConfig() {
+            if (confirm('Tem certeza que deseja restaurar as configurações padrão? As configurações atuais serão perdidas.')) {
+                loadDefaultConfig();
+                addTestLog('🔄 Configurações restauradas para os valores padrão', 'info');
+                mostrarToast('Configurações restauradas. Clique em "Salvar" para confirmar.', 'info');
+            }
+        }
+
+        // Alternar visibilidade da API Key
+        function toggleApiKeyVisibility() {
+            const apiKeyInput = document.getElementById('typebotApiKey');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                eyeIcon.className = 'bi bi-eye-slash';
+            } else {
+                apiKeyInput.type = 'password';
+                eyeIcon.className = 'bi bi-eye';
+            }
+        }
+
+        // Atualizar status da API
+        function updateApiStatus(status, message) {
+            const statusElement = document.getElementById('apiStatus');
+            const lastTestElement = document.getElementById('lastApiTest');
+            const responseTimeElement = document.getElementById('responseTime');
+            
+            if (statusElement) {
+                switch (status) {
+                    case 'online':
+                        statusElement.textContent = 'Online';
+                        statusElement.className = 'badge bg-success';
+                        break;
+                    case 'offline':
+                        statusElement.textContent = 'Offline';
+                        statusElement.className = 'badge bg-danger';
+                        break;
+                    case 'testing':
+                        statusElement.textContent = 'Testando...';
+                        statusElement.className = 'badge bg-warning';
+                        break;
+                    default:
+                        statusElement.textContent = 'Desconhecido';
+                        statusElement.className = 'badge bg-secondary';
+                }
+            }
+            
+            if (lastTestElement) {
+                lastTestElement.textContent = new Date().toLocaleTimeString('pt-BR');
+            }
+            
+            if (message && responseTimeElement) {
+                responseTimeElement.textContent = message;
+            }
+        }
+
+        // Adicionar log de teste
+        function addTestLog(message, type = 'info') {
+            const logsContainer = document.getElementById('testLogs');
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `mb-1 ${getLogClass(type)}`;
+            logEntry.innerHTML = `<small>[${timestamp}] ${message}</small>`;
+            
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Obter classe CSS para o log
+        function getLogClass(type) {
+            switch (type) {
+                case 'success': return 'text-success';
+                case 'error': return 'text-danger';
+                case 'warning': return 'text-warning';
+                case 'info': return 'text-info';
+                default: return 'text-muted';
+            }
+        }
+
+        // Limpar logs de teste
+        function clearTestLogs() {
+            document.getElementById('testLogs').innerHTML = '<div class="text-muted">Logs limpos. Pronto para novos testes...</div>';
+        }
+
+        // Preencher dados de exemplo
+        function fillTestData() {
+            document.getElementById('testPhone').value = '(21) 98333-0400';
+            document.getElementById('testName').value = 'João Silva';
+            document.getElementById('testCCP').value = '123456789';
+            document.getElementById('testProcesso').value = '2024/001';
+            document.getElementById('testValorDevido').value = 'R$ 1.500,00';
+            
+            // Data para amanhã às 14:30
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(14, 30, 0, 0);
+            
+            const year = tomorrow.getFullYear();
+            const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const day = String(tomorrow.getDate()).padStart(2, '0');
+            const hours = String(tomorrow.getHours()).padStart(2, '0');
+            const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
+                    
+            addTestLog('📋 Dados de exemplo preenchidos', 'info');
+            mostrarToast('Dados de exemplo preenchidos!', 'info');
+        }
+
+        // Alternar visibilidade da API Key
+        function toggleApiKeyVisibility() {
+            const apiKeyInput = document.getElementById('typebotApiKey');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                eyeIcon.className = 'bi bi-eye-slash';
+            } else {
+                apiKeyInput.type = 'password';
+                eyeIcon.className = 'bi bi-eye';
+            }
+        }
+
+        // Adicionar log de teste
+        function addTestLog(message, type = 'info') {
+            const logsContainer = document.getElementById('testLogs');
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `mb-1 ${type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-dark'}`;
+            logEntry.innerHTML = `<span class="text-muted">[${timestamp}]</span> ${message}`;
+            
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Limpar logs de teste
+        function clearTestLogs() {
+            document.getElementById('testLogs').innerHTML = '<div class="text-muted">Logs limpos - pronto para novos testes...</div>';
+        }
+
+        // ========== FUNÇÕES DE CONFIGURAÇÃO DA FILA ==========
+
+        // Validar template do payload em tempo real
+        function validatePayloadTemplate() {
+            const payloadTemplate = document.getElementById('payloadTemplate');
+            const template = payloadTemplate.value.trim();
+            
+            if (!template) {
+                payloadTemplate.classList.remove('is-invalid', 'is-valid');
+                clearPayloadPreview();
+                return true;
+            }
+
+            try {
+                // Primeiro, tentar fazer parse direto para ver se já é um JSON válido
+                try {
+                    const directParse = JSON.parse(template);
+                    // Se chegou aqui, é um JSON válido sem variáveis
+                    payloadTemplate.classList.remove('is-invalid');
+                    payloadTemplate.classList.add('is-valid');
+                    showPayloadPreview(directParse);
+                    addTestLog('✅ Template JSON válido', 'success');
+                    return true;
+                } catch {
+                    // Não é JSON válido ainda, pode ter variáveis
+                }
+
+                // Criar um template de teste substituindo as variáveis por valores apropriados
+                let testTemplate = template;
+                
+                // Substituir variáveis uma por uma de forma mais cuidadosa
+                const replacements = [
+                    { pattern: /"\{phone\}"/g, value: '"123456789"' },
+                    { pattern: /\{phone\}/g, value: '"123456789"' },
+                    { pattern: /"\{name\}"/g, value: '"Test Name"' },
+                    { pattern: /\{name\}/g, value: '"Test Name"' },
+                    { pattern: /"\{test\}"/g, value: 'false' },
+                    { pattern: /\{test\}/g, value: 'false' }
+                ];
+
+                replacements.forEach(({ pattern, value }) => {
+                    testTemplate = testTemplate.replace(pattern, value);
+                });
+                
+                // Tentar fazer parse do JSON processado
+                const parsed = JSON.parse(testTemplate);
+                
+                // Se chegou até aqui, o JSON é válido
+                payloadTemplate.classList.remove('is-invalid');
+                payloadTemplate.classList.add('is-valid');
+                
+                // Mostrar preview
+                showPayloadPreview(parsed);
+                addTestLog('✅ Template JSON com variáveis válido', 'success');
+                return true;
+                
+            } catch (error) {
+                payloadTemplate.classList.remove('is-valid');
+                payloadTemplate.classList.add('is-invalid');
+                
+                // Mostrar erro no preview
+                showPayloadPreview({ error: 'JSON inválido: ' + error.message }, true);
+                addTestLog('❌ Template JSON inválido: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Mostrar preview do payload processado
+        function showPayloadPreview(processedPayload, isError = false) {
+            // Adicionar ou atualizar elemento de preview se não existir
+            let previewElement = document.getElementById('payloadPreview');
+            if (!previewElement) {
+                const payloadTemplate = document.getElementById('payloadTemplate');
+                previewElement = document.createElement('div');
+                previewElement.id = 'payloadPreview';
+                previewElement.className = 'mt-2 p-2 border rounded bg-light small';
+                payloadTemplate.parentNode.insertBefore(previewElement, payloadTemplate.nextSibling);
+            }
+
+            if (isError) {
+                previewElement.className = 'mt-2 p-2 border rounded bg-danger text-white small';
+                previewElement.innerHTML = `<strong>❌ Erro:</strong> ${processedPayload.error}`;
+            } else {
+                previewElement.className = 'mt-2 p-2 border rounded bg-success text-white small';
+                previewElement.innerHTML = `
+                    <strong>✅ Preview do payload:</strong><br>
+                    <code style="color: white;">${JSON.stringify(processedPayload, null, 2)}</code>
+                `;
+            }
+        }
+
+        // Limpar preview do payload
+        function clearPayloadPreview() {
+            const previewElement = document.getElementById('payloadPreview');
+            if (previewElement) {
+                previewElement.remove();
+            }
+        }
+
+        // Carregar configurações da fila
+        async function loadQueueConfig() {
+            try {
+                const response = await fetch('/api/disparos/queue/config');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const config = data.data;
+                    
+                    // Preencher campos
+                    document.getElementById('queueMinInterval').value = config.minInterval / 1000;
+                    document.getElementById('queueMaxInterval').value = config.maxInterval / 1000;
+                    document.getElementById('queueMaxRetries').value = config.maxRetries;
+                    document.getElementById('queueBatchSize').value = config.batchSize;
+                    
+                    console.log('Configurações da fila carregadas:', config);
+                } else {
+                    console.error('Erro ao carregar configurações da fila:', data.message);
+                    mostrarToast('Erro ao carregar configurações da fila', 'danger');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar configurações da fila:', error);
+                mostrarToast('Erro ao carregar configurações da fila', 'danger');
+            }
+        }
+
+        // Salvar configurações da fila
+        async function saveQueueConfig() {
+            try {
+                const minInterval = parseInt(document.getElementById('queueMinInterval').value) * 1000;
+                const maxInterval = parseInt(document.getElementById('queueMaxInterval').value) * 1000;
+                const maxRetries = parseInt(document.getElementById('queueMaxRetries').value);
+                const batchSize = parseInt(document.getElementById('queueBatchSize').value);
+
+                // Validações básicas
+                if (minInterval < 5000) {
+                    mostrarToast('Intervalo mínimo deve ser pelo menos 5 segundos', 'danger');
+                    return;
+                }
+
+                if (maxInterval <= minInterval) {
+                    mostrarToast('Intervalo máximo deve ser maior que o mínimo', 'danger');
+                    return;
+                }
+
+                if (maxRetries < 1 || maxRetries > 10) {
+                    mostrarToast('Máximo de tentativas deve estar entre 1 e 10', 'danger');
+                    return;
+                }
+
+                const configData = {
+                    minInterval,
+                    maxInterval,
+                    maxRetries,
+                    batchSize
+                };
+
+                const response = await fetch('/api/disparos/queue/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(configData)
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mostrarToast('Configurações da fila salvas com sucesso!', 'success');
+                    
+                    // Atualizar status da fila após salvar
+                    setTimeout(() => {
+                        loadQueueStatus();
+                    }, 1000);
+                } else {
+                    mostrarToast('Erro ao salvar configurações: ' + data.message, 'danger');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao salvar configurações da fila:', error);
+                mostrarToast('Erro ao salvar configurações da fila', 'danger');
+            }
+        }
+
+        // Restaurar configurações padrão da fila
+        async function resetQueueConfig() {
+            if (!confirm('Tem certeza que deseja restaurar as configurações padrão da fila?')) {
+                return;
+            }
+
+            try {
+                const defaultConfig = {
+                    minInterval: 20000,
+                    maxInterval: 30000,
+                    maxRetries: 3,
+                    batchSize: 1
+                };
+
+                const response = await fetch('/api/disparos/queue/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(defaultConfig)
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Preencher campos com valores padrão
+                    document.getElementById('queueMinInterval').value = 20;
+                    document.getElementById('queueMaxInterval').value = 30;
+                    document.getElementById('queueMaxRetries').value = 3;
+                    document.getElementById('queueBatchSize').value = 1;
+                    
+                    mostrarToast('Configurações da fila restauradas para os valores padrão!', 'success');
+                    
+                    // Atualizar status da fila
+                    setTimeout(() => {
+                        loadQueueStatus();
+                    }, 1000);
+                } else {
+                    mostrarToast('Erro ao restaurar configurações: ' + data.message, 'danger');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao restaurar configurações da fila:', error);
+                mostrarToast('Erro ao restaurar configurações da fila', 'danger');
+            }
+        }
+
+        // Função para compatibilidade (renomeada)
+        async function testTypebotAPI() {
+            return await testTypebotConnection();
+        }
+
+        // Atualizar status periodicamente
+        setInterval(() => {
+            loadQueueStatus();
+        }, 30000); // A cada 30 segundos
+        
+        // Atualizar manualmente o status da fila
+        function refreshQueueStatus() {
+            loadQueueStatus();
+            mostrarToast('Status da fila atualizado', 'info');
+        }
+        
+        // Esta função foi movida para evitar duplicação
+        
+        // Esta função foi movida para evitar duplicação
+
+        // Event listeners para os botões e inicialização de componentes
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar os botões de controle da fila
+            const btnStartQueue = document.getElementById('btnStartQueue');
+            const btnStopQueue = document.getElementById('btnStopQueue');
+            
+            if (btnStartQueue) {
+                btnStartQueue.addEventListener('click', startQueue);
+            }
+            
+            if (btnStopQueue) {
+                btnStopQueue.addEventListener('click', stopQueue);
+            }
+            
+            // Carregar status inicial da fila
+            loadQueueStatus();
+            
+            // Inicializar outros componentes
+            testTypebotConnection();
+        });
+    </script>
+</body>
+</html>

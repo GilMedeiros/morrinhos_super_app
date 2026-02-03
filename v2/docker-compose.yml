@@ -1,0 +1,104 @@
+services:
+  # Aplicação Node.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: morrinhos-app-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:21F5F7196AADADADA444DADRFSVVXB35A858629D65D752C8@193.203.174.146:5432/morrinhos_arrecadacao?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - PDF_EXTRACTOR_URL=http://pdf-extractor:5000
+  # - CSV_PROCESSOR_URL=http://csv-processor:5001 # Removido, pois não existe esse serviço
+      - CSV_EXTRACTOR_URL=http://csv-extractor:5002
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      # - postgres  # Comentado - usando PostgreSQL da VPS
+      - redis
+    networks:
+      - morrinhos-network
+    restart: unless-stopped
+
+  # Cache Redis
+  redis:
+    image: redis:7-alpine
+    container_name: morrinhos-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - morrinhos-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: morrinhos-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - morrinhos-network
+    restart: unless-stopped
+
+  # Serviço Python para extração de PDF
+  pdf-extractor:
+    build: 
+      context: ./services/pdf_extractor
+      dockerfile: Dockerfile
+    container_name: morrinhos-pdf-extractor
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://postgres:21F5F7196AADADADA444DADRFSVVXB35A858629D65D752C8@193.203.174.146:5432/morrinhos_arrecadacao?sslmode=disable
+    depends_on:
+      # - postgres  # Comentado - usando PostgreSQL da VPS
+      - redis
+    networks:
+      - morrinhos-network
+    restart: unless-stopped
+
+  # Serviço Python para extração de CSV
+  csv-extractor:
+    build:
+      context: ./services/csv_extractor
+      dockerfile: Dockerfile
+    container_name: morrinhos-csv-extractor
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_ENV=production
+      - POSTGRES_HOST=193.203.174.146
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=morrinhos_arrecadacao
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=21F5F7196AADADADA444DADRFSVVXB35A858629D65D752C8
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - morrinhos-network
+    restart: unless-stopped
+    
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  morrinhos-network:
+    external: false

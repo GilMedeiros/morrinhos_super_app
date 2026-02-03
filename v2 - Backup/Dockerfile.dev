@@ -1,0 +1,26 @@
+# Dockerfile para desenvolvimento
+FROM node:18-alpine
+
+# Instalar nodemon globalmente para hot reload
+RUN npm install -g nodemon
+
+# Criar diretório de trabalho
+WORKDIR /app
+
+# Copiar package.json e package-lock.json
+COPY package*.json ./
+
+# Instalar todas as dependências (incluindo devDependencies)
+RUN npm install
+
+# Copiar código da aplicação
+COPY . .
+
+# Expor porta
+EXPOSE 3000
+
+# Definir variáveis de ambiente para desenvolvimento
+ENV NODE_ENV=development
+
+# Comando para iniciar em modo desenvolvimento com nodemon
+CMD ["npm", "run", "dev"]

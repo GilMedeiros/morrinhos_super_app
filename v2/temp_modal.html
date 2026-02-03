@@ -1,0 +1,105 @@
+    <!-- Modal de Detalhes do Disparo -->
+    <div class="modal fade modal-disparo-detalhes" id="modalDetalhesDisparo" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Detalhes do Disparo - <span id="modalDisparoNome"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Informações Gerais -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-calendar me-1"></i>Data de Criação</h6>
+                            <p id="modalDataCriacao" class="text-muted mb-3">-</p>
+                            
+                            <h6><i class="bi bi-file-text me-1"></i>Descrição</h6>
+                            <p id="modalDescricao" class="text-muted mb-3">-</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-flag me-1"></i>Status</h6>
+                            <p id="modalStatus" class="mb-3">-</p>
+                            
+                            <h6><i class="bi bi-graph-up me-1"></i>Progresso</h6>
+                            <div class="progress mb-2" style="height: 8px;">
+                                <div id="modalProgressBar" class="progress-bar" style="width: 0%"></div>
+                            </div>
+                            <small id="modalProgressText" class="text-muted">0 de 0 processados</small>
+                        </div>
+                    </div>
+
+                    <!-- Configuração da Mensagem -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-chat-square-text me-2"></i>
+                                        Mensagem
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <textarea id="modalMensagemPersonalizada" class="form-control" rows="4" 
+                                                placeholder="Digite aqui a mensagem que será enviada..."></textarea>
+                                            <small class="text-muted mt-2">
+                                                Você pode usar as seguintes variáveis que serão substituídas pelos dados de cada registro:
+                                                <ul class="mt-2">
+                                                    <li><code>{nome}</code> - Nome do destinatário</li>
+                                                    <li><code>{telefone}</code> - Número de telefone</li>
+                                                    <li><code>{data}</code> - Dados específicos do registro</li>
+                                                </ul>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Devedores -->
+                    <h6><i class="bi bi-people me-1"></i>Devedores Incluídos</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-devedores">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="80">ID Sol.</th>
+                                    <th>Nome</th>
+                                    <th width="120">Telefone</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalListaDevedores">
+                                <!-- Devedores serão carregados aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <div>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-danger" id="btnDeletarDisparo">
+                                <i class="bi bi-trash me-2"></i>
+                                Deletar
+                            </button>
+                            <button type="button" class="btn btn-warning" id="btnPausarDisparo">
+                                <i class="bi bi-pause-circle me-2"></i>
+                                Pausar
+                            </button>
+                            <button type="button" class="btn btn-success" id="btnExecutarDisparo">
+                                <i class="bi bi-play-circle me-2"></i>
+                                Executar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
